@@ -1,4 +1,5 @@
 import { apiGet, apiPost, toQueryString } from './client'
+import type { DetectionRun } from './detection'
 
 // Mirrors backend/app/schemas/events.py. Keep the two in sync.
 
@@ -103,6 +104,8 @@ export interface IngestionBatch {
 export interface IngestionResult {
   batch: IngestionBatch
   rejections: { position: number; message: string }[]
+  /** Detection run started automatically after new events were stored. */
+  detection?: DetectionRun | null
 }
 
 export interface Dataset {

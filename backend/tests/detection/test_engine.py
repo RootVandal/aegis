@@ -110,3 +110,15 @@ def test_explanation_is_derived_from_the_finding() -> None:
     assert explanation["false_positives"] == list(rule.false_positives)
     assert explanation["unknowns"]
     assert "not proof of compromise" in explanation["disclaimer"]
+
+
+def test_rule_catalog_document_is_up_to_date() -> None:
+    from pathlib import Path
+
+    from app.detection.catalog import render_markdown
+
+    committed = Path(__file__).resolve().parents[3] / "docs" / "DETECTION_RULES.md"
+    assert committed.read_text(encoding="utf-8") == render_markdown(), (
+        "docs/DETECTION_RULES.md is stale; regenerate it with "
+        "`python -m app.detection.catalog > ../docs/DETECTION_RULES.md`"
+    )

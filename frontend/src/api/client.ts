@@ -13,12 +13,15 @@ const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? ''
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  /** Field-level problems from the backend (validation errors), if any. */
+  readonly details: { loc: (string | number)[]; msg: string }[]
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, details: ApiError['details'] = []) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 
@@ -30,7 +33,7 @@ export function isBackendUnreachable(error: ApiError): boolean {
 const GATEWAY_STATUSES = new Set([502, 503, 504])
 
 interface ErrorEnvelope {
-  error: { code: string; message: string }
+  error: { code: string; message: string; details?: unknown }
 }
 
 function isErrorEnvelope(value: unknown): value is ErrorEnvelope {
@@ -59,7 +62,7 @@ export function toQueryString(params: Record<string, QueryValue>): string {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PATCH'
   body?: BodyInit
   contentType?: string
   signal?: AbortSignal
@@ -71,6 +74,15 @@ export function apiGet<T>(path: string, init?: { signal?: AbortSignal }): Promis
 
 export function apiPost<T>(path: string, body?: BodyInit, contentType?: string): Promise<T> {
   return apiRequest<T>(path, { method: 'POST', body, contentType })
+}
+
+/** POST/PATCH with a JSON body (or no body). */
+export function apiRequestJson<T>(method: 'POST' | 'PATCH', path: string, body?: unknown): Promise<T> {
+  return apiRequest<T>(path, {
+    method,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    contentType: body === undefined ? undefined : 'application/json',
+  })
 }
 
 async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> {
@@ -99,7 +111,8 @@ async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> 
 
   if (!response.ok) {
     if (isErrorEnvelope(body)) {
-      throw new ApiError(response.status, body.error.code, body.error.message)
+      const details = Array.isArray(body.error.details) ? (body.error.details as ApiError['details']) : []
+      throw new ApiError(response.status, body.error.code, body.error.message, details)
     }
     if (GATEWAY_STATUSES.has(response.status)) {
       // A proxy in front of the API (the Vite dev server, nginx, ...) answered

@@ -147,6 +147,64 @@ case-insensitive `LIKE` over an explicit list of columns. User input is
 escaped so `%` and `_` match literally. Unknown query parameters are
 rejected (422) instead of being ignored.
 
+## Detection engine (Milestone 3)
+
+```
+events table ─► EventRecord list ─► run_rules() ─► findings ─► alerts (+ alert_events links)
+                (sorted by time, id)  pure Python    per rule    fingerprint de-dup, explanation snapshot
+```
+
+| Module | Responsibility |
+| --- | --- |
+| `detection/model.py` | Immutable `EventRecord`, `Finding`, `Condition` and MITRE types. Rules never see ORM objects. |
+| `detection/rule.py` | `Rule` base class (metadata and `evaluate`), parameter models, and `greedy_windows`, which splits sorted events into deterministic, non-overlapping bursts. |
+| `detection/rules/*.py` | The eight rules. Each is a class whose docstring-like attributes are its documentation. |
+| `detection/mitre.py` | The only place technique IDs live, each verified against attack.mitre.org. Rules reference techniques through it, so an unverified ID cannot appear. |
+| `detection/engine.py` | Sorts events by `(timestamp, event_id)` and runs the configured rules. |
+| `detection/explain.py` | Builds the seven-part alert explanation from a finding and its rule. |
+| `services/detection.py` | Loads events, applies rule settings, stores new alerts, records the run. |
+
+**Determinism.** Rules have no access to the clock, randomness or the
+database. Events are sorted with a tie-breaker, so equal timestamps cannot
+reorder evidence. Tests run the engine on shuffled input and compare.
+
+**Configuration.** Each rule declares a Pydantic parameter model
+(`extra="forbid"`, ranges, enums). Users store *overrides* only
+(`rule_settings` table); defaults stay in code, so a new rule version can
+improve a default without touching tuned values.
+
+**Versioning.** Every rule has a `version` and a changelog. Alerts store the
+version, the effective parameters and the explanation that existed when
+they were created. Changing a rule later never rewrites history.
+
+**De-duplication.** An alert's fingerprint is SHA-256 of the rule ID plus the
+triggering event IDs. Re-running detection counts existing findings instead
+of duplicating them. The rule version is excluded on purpose, so a rule
+upgrade does not re-raise evidence analysts have already seen. Changing a
+threshold can produce a new, overlapping alert, because the evidence set
+differs.
+
+**When detection runs.** It runs after every ingestion batch that stored new
+events (`AEGIS_AUTO_DETECT`), and on demand (`POST /api/v1/detections/runs`).
+Each run evaluates all stored events, so patterns that span two uploads are
+still found.
+
+### Data model additions
+
+| Table | Purpose |
+| --- | --- |
+| `alerts` | Rule, version, severity, status (`new` for now), time span, hosts/users/IPs, explanation and parameter snapshots, fingerprint (unique). |
+| `alert_events` | Alert ↔ event links. `ON DELETE CASCADE` from the alert, `RESTRICT` from the event: an event that is evidence for an alert cannot be deleted. |
+| `detection_runs` | Trigger, counts, and per-rule version/parameters/findings, which make each run reproducible. |
+| `rule_settings` | Enabled flag and parameter overrides per rule. |
+
+### Alert lifecycle (current)
+
+Alerts are created with status `new`. The statuses `acknowledged`,
+`investigating`, `resolved` and `false_positive` exist in the schema; the
+workflow to change them, investigation notes and incident links arrive in
+Milestone 4.
+
 ## Frontend
 
 - **Routing.** React Router. `src/navigation.ts` is the single list of pages.
@@ -173,7 +231,8 @@ rejected (422) instead of being ignored.
 | Migrations | pytest + Alembic | upgrade/downgrade work; schema matches the models |
 | Parsing / normalization | pytest | every alias, timestamp format, invalid-field message, de-dup ID stability |
 | API | pytest + `TestClient` (HTTPX) | health states, error envelope, CORS, security headers, ingestion limits, filters, search escaping |
-| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content, against a path-routing `fetch` mock |
+| Detection rules | pytest on `EventRecord`s | positive, negative and edge cases per rule; thresholds and windows; parameter validation; labeled dataset gives exactly the expected findings; baseline gives none; order independence; documentation completeness; generated catalog is up to date |
+| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content; rule configuration and alert explanations, against a path-routing `fetch` mock |
 
 Backend tests run against real SQLite files created from the real migrations,
 not mocks, so they exercise the same SQL the app runs.

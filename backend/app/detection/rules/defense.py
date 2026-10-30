@@ -171,10 +171,13 @@ class SecurityConfigurationChanges(Rule[DefenseParams]):
                 )
             return None
         if event.event_type == "log_cleared" or event.windows_event_id in LOG_CLEARED_EVENT_IDS:
-            log = event.extra_text("log_name", "Channel") or "event log"
+            log = event.extra_text("log_name", "Channel")
             return (
-                f"{log} cleared",
-                Condition("An event log was cleared", f"{log} (event ID {event.windows_event_id})"),
+                f"{log} event log cleared" if log else "Event log cleared",
+                Condition(
+                    "An event log was cleared",
+                    f"{log or 'unnamed log'} (event ID {event.windows_event_id})",
+                ),
                 "T1685.005",
             )
         if include_command_line and event.event_type == "process_creation":

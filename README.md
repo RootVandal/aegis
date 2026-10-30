@@ -20,14 +20,38 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | --- | --- | --- |
 | 1 | Working foundation: FastAPI, React, SQLite, migrations, health checks | **Done** |
 | 2 | Event pipeline: normalization, JSON/JSONL ingestion, search | **Done** |
-| 3 | Detection engine: 8 deterministic rules with explanations | Planned |
+| 3 | Detection engine: 8 deterministic rules with explanations | **Done** |
 | 4 | Alert and incident workflows, correlation, timelines | Planned |
 | 5 | Overview dashboard and remaining UI | Planned |
 | 6 | Scenario Lab (4 training scenarios) | Planned |
 | 7 | Detection evaluation lab (precision / recall on labeled data) | Planned |
 | 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
 
-### What works today (Milestones 1–2)
+### What works today (Milestones 1–3)
+
+**Detection engine (Milestone 3)**
+
+- Eight deterministic, explainable rules: failed logins, multi-account
+  authentication (password spraying), suspicious PowerShell, privilege
+  escalation indicators, suspicious process relationships, persistence
+  changes, suspicious outbound connections and security configuration
+  changes. The full catalog is in
+  [docs/DETECTION_RULES.md](docs/DETECTION_RULES.md), generated from the
+  rule code.
+- Each rule documents its logic, required fields, investigation steps,
+  false positives, limitations and version history. ATT&CK mappings were
+  verified against attack.mitre.org (v20.0).
+- Configurable thresholds and lists per rule, validated on save. Rules can
+  be enabled and disabled.
+- Detection runs automatically after every import (and on demand). Alerts
+  are de-duplicated, so re-running never creates the same alert twice.
+- Every alert carries a structured explanation built from its own evidence:
+  what was detected, which events, which conditions, what is unknown, next
+  steps and likely false positives. No language model is involved.
+- A labeled **detection-lab** dataset with positive cases and lookalikes
+  for every rule. The engine produces exactly the 19 expected findings on
+  it, and none on the 203-event baseline.
+- Read-only **Alerts** pages. Status changes and notes arrive in Milestone 4.
 
 **Event pipeline (Milestone 2)**
 
@@ -131,7 +155,14 @@ no CORS configuration is needed in development.
    [docs/examples/malformed-events.jsonl](docs/examples/malformed-events.jsonl).
    One record is stored, and the other seven are listed with the reason each
    was rejected.
-5. **System Health** shows the stored-event count. Stop the backend and press
+5. Back on **Import events**, load **Detection lab (labeled)**. The result
+   reports `19 new alert(s)`, and the baseline data from step 2 adds none.
+6. Open **Alerts → 7 failed logins for user j.martin followed by a success**
+   to read the seven-part explanation, then follow a triggering event into
+   the Event Explorer.
+7. On **Detection Rules → AEGIS-AUTH-001**, change `threshold` and press
+   **Run detections now** to see the effect of tuning.
+8. **System Health** shows the stored-event count. Stop the backend and press
    **Refresh**: the page reports that the backend cannot be reached instead
    of showing stale data.
 
@@ -177,7 +208,13 @@ npm run build
 
 - **No authentication.** Anyone who can reach the API can use it. Run it on
   localhost only.
-- No detections, alerts or incidents yet (Milestones 3–4).
+- Alerts cannot yet be triaged (status changes, notes) and there are no
+  incidents or correlation (Milestone 4).
+- Detection re-evaluates all stored events on each run. That is simple and
+  correct for tens of thousands of events, but would need an incremental
+  design for large volumes.
+- The rules are tuned for the synthetic datasets. Good results on synthetic
+  data do not show how they would perform on real telemetry.
 - Event import accepts JSON / JSON Lines only. There is no native `.evtx`,
   syslog or CEF parsing.
 - Text search uses SQL `LIKE` over selected columns. It is fine for tens of

@@ -144,16 +144,16 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
             found = self._match(event, params)
             if found is None:
                 continue
-            kind, name, condition, mitre_id = found
+            what, name, condition, mitre_id = found
             if name and name.lower() in allowed:
                 continue
             findings.append(
                 Finding(
                     rule_id=self.id,
-                    title=f"New {kind}{f' {name!r}' if name else ''} on "
+                    title=f"{what}{f' {name!r}' if name else ''} on "
                     f"{event.hostname or 'unknown host'}",
                     severity=self.severity,
-                    summary=f"A {kind} was created.",
+                    summary=f"{what}.",
                     events=(event,),
                     conditions=(condition,),
                     mitre_ids=(mitre_id,) if mitre_id else (),
@@ -167,7 +167,7 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
         if event.event_type == "scheduled_task_created" or event.windows_event_id in TASK_EVENT_IDS:
             name = event.extra_text("task_name", "TaskName")
             return (
-                "scheduled task",
+                "New scheduled task",
                 name,
                 Condition("Scheduled task created", name or "(name not recorded)"),
                 "T1053.005",
@@ -176,7 +176,7 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
             name = event.extra_text("service_name", "ServiceName")
             binary = event.extra_text("service_file_name", "ImagePath", "ServiceFileName")
             return (
-                "service",
+                "New service",
                 name,
                 Condition("Service installed", f"{name or '(unnamed)'} -> {binary or '(no path)'}"),
                 "T1543.003",
@@ -185,7 +185,7 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
             key = event.extra_text("registry_key", "TargetObject")
             if key and RUN_KEY.search(key):
                 return (
-                    "autostart registry value",
+                    "New autostart registry value",
                     None,
                     Condition("Autostart (Run/Winlogon) registry key modified", key),
                     "T1547.001",
@@ -196,7 +196,7 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
             if hits:
                 item, text = hits[0]
                 return (
-                    "persistence command",
+                    item.description,
                     None,
                     Condition(item.description, f"matched '{text}'"),
                     item.mitre_id,

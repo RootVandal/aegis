@@ -40,6 +40,12 @@ describes its security assumptions and current limitations.
   record. Invalid UTF-8, `NaN` / `Infinity` and deeply nested JSON are
   rejected without crashing the parser.
 - Search input is escaped before it is used in SQL `LIKE` patterns.
+- Detection rules never execute anything: they only read stored events.
+  Rule parameters are validated against each rule's schema, and ATT&CK
+  mappings can only reference verified techniques.
+- Evidence integrity: an event referenced by an alert cannot be deleted
+  (database `RESTRICT` constraint), and alert explanations are stored as
+  snapshots.
 
 ## Known limitations
 

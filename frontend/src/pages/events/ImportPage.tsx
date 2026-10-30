@@ -188,6 +188,20 @@ function ResultPanel({ result }: { result: IngestionResult }) {
           View events →
         </Link>
       )}
+      {result.detection && (
+        <p className="mt-2 font-mono text-[12px] text-ink-muted">
+          Detection ran over {formatCount(result.detection.events_evaluated)} events:{' '}
+          <span className={result.detection.alerts_created > 0 ? 'text-warn' : 'text-ink'}>
+            {formatCount(result.detection.alerts_created)} new alert(s)
+          </span>
+          {result.detection.alerts_existing > 0 && `, ${formatCount(result.detection.alerts_existing)} already known`}
+          {result.detection.alerts_created > 0 && (
+            <Link to="/alerts" className="ml-2 font-sans text-ok hover:underline">
+              View alerts →
+            </Link>
+          )}
+        </p>
+      )}
       {rejections.length > 0 && (
         <div className="mt-3">
           <h3 className="mb-1 text-[11px] uppercase tracking-wider text-ink-faint">
