@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import DateTime, MetaData
+from sqlalchemy import DateTime, Enum, MetaData
 from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.types import TypeDecorator
@@ -54,3 +54,17 @@ class UTCDateTime(TypeDecorator[datetime]):
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def enum_column(enum_cls: type[Any], name: str) -> Enum:
+    # Store the enum *value* ("high"), not the Python member name ("HIGH"),
+    # and add a CHECK constraint so invalid values cannot be written directly.
+    return Enum(
+        enum_cls,
+        name=name,
+        native_enum=False,
+        create_constraint=True,
+        length=16,
+        values_callable=lambda members: [m.value for m in members],
+        validate_strings=True,
+    )

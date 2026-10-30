@@ -17,15 +17,16 @@ from app.ingestion.parser import (
     parse_jsonl,
 )
 from app.ingestion.service import IngestionResult, ingest_records
-from app.models import IngestionBatch
-from app.models.enums import DataOrigin
+from app.models import DetectionRun, IngestionBatch
+from app.models.enums import DataOrigin, DetectionTrigger
 from app.sample_data import DATASETS
+from app.schemas.detection import DetectionRunOut, IngestionWithDetection
 from app.schemas.events import (
     DatasetOut,
     IngestionBatchOut,
-    IngestionResponse,
     RecordRejectionOut,
 )
+from app.services.detection import run_detection
 
 router = APIRouter(tags=["ingestion"])
 
@@ -62,7 +63,7 @@ def _too_large(limit: int) -> AppError:
 
 @router.post(
     "/ingestion/batches",
-    response_model=IngestionResponse,
+    response_model=IngestionWithDetection,
     status_code=201,
     summary="Ingest events (JSONL or JSON)",
     openapi_extra={
@@ -80,7 +81,7 @@ async def create_batch(
     db: Annotated[Session, Depends(get_db)],
     source_name: Annotated[str, Query(min_length=1, max_length=255)] = "api-upload",
     data_origin: DataOrigin = DataOrigin.IMPORTED,
-) -> IngestionResponse:
+) -> IngestionWithDetection:
     """Send events as the raw request body.
 
     * ``Content-Type: application/x-ndjson`` (or ``application/jsonl``): one
@@ -111,10 +112,10 @@ async def create_batch(
     except BodyError as exc:
         raise AppError(400, "invalid_body", str(exc)) from None
 
-    result = await run_in_threadpool(
+    result, run = await run_in_threadpool(
         _ingest, db, parsed, settings, source_name, input_format, data_origin
     )
-    return _response(result)
+    return _response(result, run)
 
 
 def _ingest(
@@ -124,7 +125,7 @@ def _ingest(
     source_name: str,
     input_format: InputFormat,
     data_origin: DataOrigin,
-) -> IngestionResult:
+) -> tuple[IngestionResult, DetectionRun | None]:
     if not parsed:
         raise AppError(400, "empty_body", "The request contained no events.")
     if len(parsed) > settings.max_ingest_records:
@@ -133,9 +134,20 @@ def _ingest(
             "too_many_records",
             f"{len(parsed)} records received; the limit is {settings.max_ingest_records}.",
         )
-    return ingest_records(
+    result = ingest_records(
         db, parsed, source_name=source_name, input_format=input_format, data_origin=data_origin
     )
+    return result, _detect_after_ingest(db, settings, result)
+
+
+def _detect_after_ingest(
+    db: Session, settings: Settings, result: IngestionResult
+) -> DetectionRun | None:
+    """New events can complete a pattern (e.g. the fifth failed login), so
+    detection runs automatically after every batch that stored something."""
+    if not settings.auto_detect or result.batch.accepted_count == 0:
+        return None
+    return run_detection(db, DetectionTrigger.INGESTION)
 
 
 @router.get(
@@ -167,11 +179,13 @@ def list_datasets() -> list[DatasetOut]:
 
 @router.post(
     "/datasets/{dataset_id}/load",
-    response_model=IngestionResponse,
+    response_model=IngestionWithDetection,
     status_code=201,
     summary="Load a bundled synthetic dataset",
 )
-def load_dataset(dataset_id: str, db: Annotated[Session, Depends(get_db)]) -> IngestionResponse:
+def load_dataset(
+    dataset_id: str, request: Request, db: Annotated[Session, Depends(get_db)]
+) -> IngestionWithDetection:
     """Runs the dataset through the same normalization and storage path as an
     upload, labelled ``synthetic``. Loading it again only adds duplicates."""
     dataset = DATASETS.get(dataset_id)
@@ -188,13 +202,14 @@ def load_dataset(dataset_id: str, db: Annotated[Session, Depends(get_db)]) -> In
         input_format=InputFormat.JSON,
         data_origin=DataOrigin.SYNTHETIC,
     )
-    return _response(result)
+    return _response(result, _detect_after_ingest(db, request.app.state.settings, result))
 
 
-def _response(result: IngestionResult) -> IngestionResponse:
-    return IngestionResponse(
+def _response(result: IngestionResult, run: DetectionRun | None) -> IngestionWithDetection:
+    return IngestionWithDetection(
         batch=IngestionBatchOut.model_validate(result.batch),
         rejections=[
             RecordRejectionOut(position=r.position, message=r.message) for r in result.rejections
         ],
+        detection=DetectionRunOut.model_validate(run) if run else None,
     )

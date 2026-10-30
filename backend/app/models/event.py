@@ -3,25 +3,11 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, UTCDateTime, utc_now
+from app.db.base import Base, UTCDateTime, enum_column, utc_now
 from app.models.enums import DataOrigin, IngestionStatus, Severity
-
-
-def _enum_column(enum_cls: type[Any], name: str) -> Enum:
-    # Store the enum *value* ("high"), not the Python member name ("HIGH"),
-    # and add a CHECK constraint so invalid values cannot be written directly.
-    return Enum(
-        enum_cls,
-        name=name,
-        native_enum=False,
-        create_constraint=True,
-        length=16,
-        values_callable=lambda members: [m.value for m in members],
-        validate_strings=True,
-    )
 
 
 class IngestionBatch(Base):
@@ -36,9 +22,9 @@ class IngestionBatch(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     source_name: Mapped[str] = mapped_column(String(255))
     input_format: Mapped[str] = mapped_column(String(16))
-    data_origin: Mapped[DataOrigin] = mapped_column(_enum_column(DataOrigin, "data_origin"))
+    data_origin: Mapped[DataOrigin] = mapped_column(enum_column(DataOrigin, "data_origin"))
     status: Mapped[IngestionStatus] = mapped_column(
-        _enum_column(IngestionStatus, "ingestion_status")
+        enum_column(IngestionStatus, "ingestion_status")
     )
     started_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
@@ -75,7 +61,7 @@ class Event(Base):
     event_source: Mapped[str] = mapped_column(String(64))
     event_type: Mapped[str] = mapped_column(String(64), index=True)
     severity: Mapped[Severity] = mapped_column(
-        _enum_column(Severity, "severity"), default=Severity.INFORMATIONAL
+        enum_column(Severity, "severity"), default=Severity.INFORMATIONAL
     )
 
     hostname: Mapped[str | None] = mapped_column(String(255), index=True)
@@ -92,7 +78,7 @@ class Event(Base):
     raw_event: Mapped[dict[str, Any]] = mapped_column(JSON)
     normalized_fields: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
-    data_origin: Mapped[DataOrigin] = mapped_column(_enum_column(DataOrigin, "data_origin"))
+    data_origin: Mapped[DataOrigin] = mapped_column(enum_column(DataOrigin, "data_origin"))
     scenario_id: Mapped[str | None] = mapped_column(String(64), index=True)
 
     batch_id: Mapped[int | None] = mapped_column(

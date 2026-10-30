@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.sample_data.baseline import generate_baseline
+from app.sample_data.detection_lab import generate_detection_lab
 
 
 @dataclass(frozen=True)
@@ -25,5 +26,15 @@ DATASETS: dict[str, DatasetDefinition] = {
             "no attack activity; useful for spotting false positives."
         ),
         generate=generate_baseline,
+    ),
+    "detection-lab": DatasetDefinition(
+        id="detection-lab",
+        name="Detection lab (labeled)",
+        description=(
+            "One synthetic day containing activity that each detection rule should "
+            "report, next to lookalikes it must not report. Used by the rule tests; "
+            "loading it creates the expected alerts."
+        ),
+        generate=generate_detection_lab,
     ),
 }

@@ -42,9 +42,10 @@ def test_sysmon_and_security_events_resolve_to_the_same_user() -> None:
 
 
 def test_dataset_listing_and_loading(client: TestClient) -> None:
-    datasets = client.get("/api/v1/datasets").json()
-    assert [d["id"] for d in datasets] == ["baseline"]
-    expected = datasets[0]["event_count"]
+    datasets = {d["id"]: d for d in client.get("/api/v1/datasets").json()}
+    assert set(datasets) == {"baseline", "detection-lab"}
+    assert all(d["data_origin"] == "synthetic" for d in datasets.values())
+    expected = datasets["baseline"]["event_count"]
 
     first = client.post("/api/v1/datasets/baseline/load").json()["batch"]
     second = client.post("/api/v1/datasets/baseline/load").json()["batch"]

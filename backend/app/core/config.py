@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     max_ingest_records: int = Field(default=10_000, gt=0)
     max_record_bytes: int = Field(default=64 * 1024, gt=0)
 
+    # Run all enabled detection rules automatically after each ingestion batch.
+    auto_detect: bool = True
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
