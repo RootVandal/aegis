@@ -23,11 +23,33 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | 3 | Detection engine: 8 deterministic rules with explanations | **Done** |
 | 4 | Alert and incident workflows, correlation, timelines | **Done** |
 | 5 | Overview dashboard and remaining UI | **Done** |
-| 6 | Scenario Lab (4 training scenarios) | Planned |
+| 6 | Scenario Lab (4 training scenarios) | **Done** |
 | 7 | Detection evaluation lab (precision / recall on labeled data) | Planned |
 | 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
 
-### What works today (Milestones 1–5)
+### What works today (Milestones 1–6)
+
+**Scenario Lab (Milestone 6)**
+
+- Four guided investigations on synthetic data, from beginner to advanced:
+  account takeover through password guessing; a malicious macro document
+  next to a benign finance macro; privilege escalation through a
+  misconfigured service next to an authorized change; and a multi-stage
+  intrusion (phishing → persistence → credential misuse → defense
+  impairment → command and control).
+- Each scenario has a briefing, objectives, questions, progressive hints,
+  the detection rules involved, the intended reasoning and a discussion of
+  false positives. The explanation stays hidden until you submit or choose
+  to reveal it. Answers are not part of any API response before that.
+- **Evidence-based grading.** You cite the events your conclusions rest on.
+  The grade checks that the conclusions are correct, that the key evidence
+  is cited, and that no benign lookalike is cited as evidence. Written
+  reasoning is stored and shown next to the model reasoning, but it is not
+  auto-graded (that would need a human or a language model). Time and
+  hints are recorded but never scored.
+- Scenario data goes through the normal ingestion and detection pipeline,
+  so you investigate with the real tools (Event Explorer, alerts,
+  Investigation). Drafts survive navigation.
 
 **Overview dashboard (Milestone 5)**
 
@@ -207,7 +229,11 @@ no CORS configuration is needed in development.
 9. In the incident: move it to *investigating*, mark the successful logon
    (`syn-lab-008`) as evidence, add a hypothesis, record the final assessment,
    then move to *contained* and *resolved*. **Preview** shows the report.
-10. **System Health** shows the stored-event count. Stop the backend and press
+10. Open **Scenario Lab → Suspicious process investigation → Start
+    investigation**. Use the linked Event Explorer view and the alerts, cite
+    the events you rely on, answer the questions, and submit. The assessment
+    lists which objectives were met and explains every answer.
+11. **System Health** shows the stored-event count. Stop the backend and press
     **Refresh**: the page reports that the backend cannot be reached instead
     of showing stale data.
 

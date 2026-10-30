@@ -17,6 +17,8 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then((m) => ({ de
 const OverviewPage = lazy(() => import('./pages/overview/OverviewPage').then((m) => ({ default: m.OverviewPage })))
 const RuleDetailPage = lazy(() => import('./pages/rules/RuleDetailPage').then((m) => ({ default: m.RuleDetailPage })))
 const RulesPage = lazy(() => import('./pages/rules/RulesPage').then((m) => ({ default: m.RulesPage })))
+const ScenarioLabPage = lazy(() => import('./pages/scenarios/ScenarioLabPage').then((m) => ({ default: m.ScenarioLabPage })))
+const ScenarioPage = lazy(() => import('./pages/scenarios/ScenarioPage').then((m) => ({ default: m.ScenarioPage })))
 const SystemHealthPage = lazy(() => import('./pages/SystemHealthPage').then((m) => ({ default: m.SystemHealthPage })))
 
 export function App() {
@@ -35,6 +37,8 @@ export function App() {
         <Route path="/incidents" element={<IncidentsPage />} />
         <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
         <Route path="/investigation" element={<InvestigationPage />} />
+        <Route path="/scenarios" element={<ScenarioLabPage />} />
+        <Route path="/scenarios/:scenarioId" element={<ScenarioPage />} />
         <Route path="/health" element={<SystemHealthPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

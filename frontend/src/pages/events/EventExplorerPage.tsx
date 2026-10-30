@@ -27,6 +27,7 @@ const FILTER_KEYS = [
   'username',
   'source_ip',
   'data_origin',
+  'scenario_id',
   'sort',
   'page',
 ] as const satisfies readonly (keyof EventFilters)[]
@@ -38,6 +39,7 @@ const FILTER_LABELS: Partial<Record<keyof EventFilters, string>> = {
   event_type: 'type',
   source_ip: 'source IP',
   data_origin: 'origin',
+  scenario_id: 'scenario',
 }
 
 function readFilters(params: URLSearchParams): EventFilters {

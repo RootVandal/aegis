@@ -70,7 +70,9 @@ def test_briefing_is_complete(scenario: Scenario) -> None:
 
 @pytest.mark.parametrize("scenario", ALL, ids=lambda s: s.id)
 def test_every_relevant_rule_fires_on_the_dataset(scenario: Scenario) -> None:
-    results = run_rules([from_raw(r) for r in scenario.generate()], [RuleConfig(r, {}) for r in RULES])
+    results = run_rules(
+        [from_raw(r) for r in scenario.generate()], [RuleConfig(r, {}) for r in RULES]
+    )
     fired = {r.rule.id for r in results if r.findings}
 
     assert set(scenario.relevant_rules) <= fired
@@ -101,7 +103,9 @@ def test_wrong_answer_fails_only_that_objective() -> None:
     submission = perfect(scenario)
     answers = {**submission.answers, "source": "10.10.200.14"}
 
-    result = grade(scenario, GradeInput(answers, submission.evidence_event_ids, RATIONALE), event_ids(scenario))
+    result = grade(
+        scenario, GradeInput(answers, submission.evidence_event_ids, RATIONALE), event_ids(scenario)
+    )
 
     met = {o["objective"]: o["met"] for o in result["objectives"]}
     assert met["Reach correct conclusions"] is False
@@ -141,7 +145,9 @@ def test_citing_a_decoy_is_reported_with_its_benign_explanation() -> None:
                                         RATIONALE), event_ids(scenario))  # fmt: skip
 
     assert result["completed"] is False
-    assert result["evidence"]["decoys_cited"] == [{"event_ids": [decoy.event_ids[0]], "why": decoy.why}]
+    assert result["evidence"]["decoys_cited"] == [
+        {"event_ids": [decoy.event_ids[0]], "why": decoy.why}
+    ]
 
 
 def test_supporting_and_unrelated_citations_are_listed_without_penalty() -> None:
@@ -222,7 +228,9 @@ def test_listing_before_anything_is_loaded(client: TestClient) -> None:
 
 
 @pytest.mark.parametrize("scenario", ALL, ids=lambda s: s.id)
-def test_answers_do_not_leak_before_the_attempt_is_closed(client: TestClient, scenario: Scenario) -> None:
+def test_answers_do_not_leak_before_the_attempt_is_closed(
+    client: TestClient, scenario: Scenario
+) -> None:
     attempt = start(client, scenario.id)
     for _ in range(len(scenario.hints)):
         client.post(f"/api/v1/scenario-attempts/{attempt['id']}/hints")
@@ -281,7 +289,11 @@ def test_submitting_grades_closes_and_unlocks_the_solution(client: TestClient) -
     assert client.post(f"/api/v1/scenario-attempts/{attempt['id']}/hints").status_code == 409
     summary = next(s for s in client.get("/api/v1/scenarios").json() if s["id"] == scenario.id)
     assert summary["completed"] is True
-    assert summary["latest_attempt"] == {"id": attempt["id"], "status": "submitted", "completed": True}
+    assert summary["latest_attempt"] == {
+        "id": attempt["id"],
+        "status": "submitted",
+        "completed": True,
+    }
 
 
 def test_invalid_submission_keeps_the_attempt_open(client: TestClient) -> None:
@@ -291,7 +303,9 @@ def test_invalid_submission_keeps_the_attempt_open(client: TestClient) -> None:
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_submission"
-    assert client.get(f"/api/v1/scenario-attempts/{attempt['id']}").json()["status"] == "in_progress"
+    assert (
+        client.get(f"/api/v1/scenario-attempts/{attempt['id']}").json()["status"] == "in_progress"
+    )
 
 
 def test_revealing_without_submitting(client: TestClient) -> None:
@@ -302,11 +316,18 @@ def test_revealing_without_submitting(client: TestClient) -> None:
     assert revealed["status"] == "revealed"
     assert revealed["evaluation"] is None
     assert revealed["solution"] is not None
-    summary = next(s for s in client.get("/api/v1/scenarios").json() if s["id"] == "service-escalation")
+    summary = next(
+        s for s in client.get("/api/v1/scenarios").json() if s["id"] == "service-escalation"
+    )
     assert summary["completed"] is False
 
 
 def test_unknown_scenario_and_attempt(client: TestClient) -> None:
-    assert client.post("/api/v1/scenarios/nope/attempts").json()["error"]["code"] == "scenario_not_found"
-    assert client.get("/api/v1/scenario-attempts/999").json()["error"]["code"] == "attempt_not_found"
+    assert (
+        client.post("/api/v1/scenarios/nope/attempts").json()["error"]["code"]
+        == "scenario_not_found"
+    )
+    assert (
+        client.get("/api/v1/scenario-attempts/999").json()["error"]["code"] == "attempt_not_found"
+    )
     assert client.post("/api/v1/scenario-attempts/1/submit", json={"extra": 1}).status_code == 422

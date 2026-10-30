@@ -308,6 +308,41 @@ precomputed, so the numbers always agree with the lists they link to.
   multi-hue severity palette was checked and rejected: high and medium were
   too close (ΔE 13.6).
 
+## Scenario Lab (Milestone 6)
+
+| Module | Responsibility |
+| --- | --- |
+| `scenarios/model.py` | `Scenario` definition and `grade()`, a pure function from a submission to an explainable evaluation. |
+| `scenarios/builder.py` | Writes scenario datasets. Each helper returns the new event's ID, so answer keys reference real events. |
+| `scenarios/catalog.py` | The four scenarios: data, briefing, questions, evidence key, hints, reasoning. |
+| `scenarios/service.py` | Loading data (normal ingestion + detection, idempotent), attempts, hints, submit, reveal. |
+
+**Evidence key.** *Required* evidence is a list of groups (citing any event
+of a group satisfies it, e.g. one of three beacon connections). *Supporting*
+events may be cited freely. *Decoys* look suspicious but have a benign
+explanation; citing one fails the "avoid misleading evidence" objective.
+The grade has five objectives: answer every question, correct
+conclusions, key evidence cited, no decoy cited, and a written rationale.
+The rationale is stored for self-review and is not judged automatically.
+
+**No leaks by construction.** The public schemas (`ScenarioDetail`,
+`AttemptOut` while in progress) have no fields for answers, explanations,
+the evidence key or the reasoning. `SolutionOut` is attached only to closed
+attempts. A test scans every pre-submission response of every scenario for
+any of that text.
+
+**Isolation.** Each scenario's events carry `scenario_id = lab-<id>` and sit
+on their own September 2026 day, so scenarios do not correlate with each
+other or with the baseline and detection-lab data. Consistency tests check
+that every key references real events, that the evidence sets are disjoint,
+that every listed rule fires on the data, and that addresses are private or
+RFC 5737 documentation ranges.
+
+**Attempts** (`scenario_attempts`) are closed by submitting (graded) or by
+revealing (no grade). A new attempt can always be started. The UI keeps the
+in-progress draft in `localStorage` so it survives navigating to the
+investigation tools; this is a per-browser convenience, not stored state.
+
 ## Frontend
 
 - **Routing.** React Router. `src/navigation.ts` is the single list of pages.

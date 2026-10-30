@@ -67,6 +67,7 @@ export interface EventFilters {
   username?: string
   source_ip?: string
   data_origin?: string
+  scenario_id?: string
   sort?: string
   page?: string
 }
