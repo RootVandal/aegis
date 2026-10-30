@@ -50,6 +50,8 @@ def _conditions(filters: EventFilters) -> list[ColumnElement[bool]]:
         conditions.append(Event.source_ip == filters.source_ip)
     if filters.data_origin:
         conditions.append(Event.data_origin == filters.data_origin)
+    if filters.scenario_id:
+        conditions.append(Event.scenario_id == filters.scenario_id)
     if filters.q:
         # SQLite's LIKE is case-insensitive for ASCII; lower() makes the
         # behaviour explicit and portable to other databases.

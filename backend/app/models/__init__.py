@@ -10,6 +10,7 @@ from app.models.investigation import (
     IncidentHistory,
     IncidentNote,
 )
+from app.models.scenario import ScenarioAttempt
 
 __all__ = [
     "Alert",
@@ -23,5 +24,6 @@ __all__ = [
     "IncidentNote",
     "IngestionBatch",
     "RuleSetting",
+    "ScenarioAttempt",
     "alert_events",
 ]

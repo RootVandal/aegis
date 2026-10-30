@@ -23,6 +23,7 @@ class EventFilters(BaseModel):
     username: str | None = Field(default=None, max_length=255)
     source_ip: str | None = None
     data_origin: DataOrigin | None = None
+    scenario_id: str | None = Field(default=None, max_length=64)
     q: str | None = Field(default=None, max_length=200, description="Case-insensitive text search.")
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, ge=1, le=200)

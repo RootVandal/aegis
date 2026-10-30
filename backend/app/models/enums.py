@@ -56,3 +56,9 @@ class AssessmentVerdict(StrEnum):
     BENIGN_ACTIVITY = "benign_activity"  # the activity happened but was authorized/expected
     FALSE_POSITIVE = "false_positive"  # the detection was wrong about what happened
     INCONCLUSIVE = "inconclusive"  # the evidence does not support a conclusion
+
+
+class AttemptStatus(StrEnum):
+    IN_PROGRESS = "in_progress"
+    SUBMITTED = "submitted"  # graded; explanation unlocked
+    REVEALED = "revealed"  # analyst asked for the explanation without submitting

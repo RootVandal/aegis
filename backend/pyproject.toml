@@ -26,6 +26,8 @@ known-third-party = ["alembic"]
 # Plain `assert` is the idiom in pytest; test data (registry paths, command
 # lines) is clearer unwrapped; seeded random is used only to shuffle input.
 "tests/**" = ["S101", "E501", "S311"]
+# Scenario content: command lines and prose read better unwrapped.
+"app/scenarios/catalog.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
