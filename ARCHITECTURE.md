@@ -119,6 +119,34 @@ code, so old migrations keep working when the models change. A test
 in the body, so the UI can explain *why* something is wrong. When the schema
 is not current, the data counts are `null` rather than a misleading zero.
 
+## Event pipeline (Milestone 2)
+
+```
+request body ─► parser ─► normalizer ─► ingestion service ─► events table
+ (bytes)        records    NormalizedEvent   de-dup + batch      + ingestion_batches
+```
+
+| Stage | Module | Responsibility |
+| --- | --- | --- |
+| Transport | `api/routes/ingestion.py` | Content type, streamed body-size limit, record-count limit. |
+| Parsing | `ingestion/parser.py` | Bytes → JSON objects. UTF-8 (BOM-tolerant), one result per line, safe against `NaN`, deep nesting and oversized records. Knows nothing about events. |
+| Normalization | `ingestion/normalizer.py` | Alias mapping, then a Pydantic model for types and ranges, then documented transformations (UTC, canonical IPs, `DOMAIN\user`, process path → name). Any invalid field rejects the whole record with a field-level message. |
+| Storage | `ingestion/service.py` | De-duplication against the database and within the batch, insert, and batch counters (`received = accepted + duplicate + rejected`). |
+
+The stages are separate so each can be tested alone, and so new input
+formats (EVTX, syslog, CSV) only need a new parser that produces records for
+the same normalizer.
+
+The bundled datasets (`app/sample_data/`) go through the same normalizer
+and storage path as uploads. The baseline generator uses a fixed seed and a
+fixed start date, so it produces identical events and IDs on every run.
+
+**Search** (`services/event_query.py`) combines filters with AND. It uses
+offset pagination ordered by `(timestamp, id)` so pages stay stable, and a
+case-insensitive `LIKE` over an explicit list of columns. User input is
+escaped so `%` and `_` match literally. Unknown query parameters are
+rejected (422) instead of being ignored.
+
 ## Frontend
 
 - **Routing.** React Router. `src/navigation.ts` is the single list of pages.
@@ -143,8 +171,9 @@ is not current, the data counts are `null` rather than a misleading zero.
 | --- | --- | --- |
 | Models / DB | pytest + real SQLite | UTC handling, uniqueness, CHECK constraints, evidence kept on batch delete |
 | Migrations | pytest + Alembic | upgrade/downgrade work; schema matches the models |
-| API | pytest + `TestClient` (HTTPX) | health states, error envelope, CORS, security headers |
-| Frontend | Vitest + React Testing Library | API client error mapping; pages rendered against mocked `fetch` responses |
+| Parsing / normalization | pytest | every alias, timestamp format, invalid-field message, de-dup ID stability |
+| API | pytest + `TestClient` (HTTPX) | health states, error envelope, CORS, security headers, ingestion limits, filters, search escaping |
+| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content, against a path-routing `fetch` mock |
 
 Backend tests run against real SQLite files created from the real migrations,
 not mocks, so they exercise the same SQL the app runs.

@@ -20,7 +20,7 @@ describes its security assumptions and current limitations.
 - AEGIS never executes commands on monitored systems and never sends event data
   to external services.
 
-## Controls in place (Milestone 1)
+## Controls in place
 
 - Input validation through Pydantic models on every API endpoint.
 - Database access only through SQLAlchemy (parameterized queries).
@@ -32,14 +32,21 @@ describes its security assumptions and current limitations.
   `Referrer-Policy: no-referrer` on API responses.
 - Configuration comes only from environment variables, with no secrets in the
   repository (`.env` files are git-ignored; see `.env.example`).
-- A frontend lint rule forbids `dangerouslySetInnerHTML`.
+- A frontend lint rule forbids `dangerouslySetInnerHTML`. Event content,
+  including the raw record, is rendered as escaped text, and a test checks
+  that a `<script>` in a command line stays inert.
+- Event ingestion limits: 5 MiB per request (counted on the stream, so a
+  false `Content-Length` cannot bypass it), 10,000 records and 64 KiB per
+  record. Invalid UTF-8, `NaN` / `Infinity` and deeply nested JSON are
+  rejected without crashing the parser.
+- Search input is escaped before it is used in SQL `LIKE` patterns.
 
 ## Known limitations
 
 - **No authentication or authorization.**
 - No rate limiting.
-- No request-size limits yet. They arrive with the ingestion API in
-  Milestone 2.
+- Request-size limits apply to the ingestion endpoint only. Other endpoints
+  accept small JSON bodies and have no explicit cap yet.
 - No Content-Security-Policy yet.
 - SQLite is a single local file with no encryption at rest.
 

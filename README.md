@@ -19,7 +19,7 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | 1 | Working foundation: FastAPI, React, SQLite, migrations, health checks | **Done** |
-| 2 | Event pipeline: normalization, JSON/JSONL ingestion, search | Planned |
+| 2 | Event pipeline: normalization, JSON/JSONL ingestion, search | **Done** |
 | 3 | Detection engine: 8 deterministic rules with explanations | Planned |
 | 4 | Alert and incident workflows, correlation, timelines | Planned |
 | 5 | Overview dashboard and remaining UI | Planned |
@@ -27,7 +27,33 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | 7 | Detection evaluation lab (precision / recall on labeled data) | Planned |
 | 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
 
-### What works today (Milestone 1)
+### What works today (Milestones 1–2)
+
+**Event pipeline (Milestone 2)**
+
+- Import security events as **JSON Lines** or **JSON** through the UI or
+  `POST /api/v1/ingestion/batches`. The format is documented in
+  [docs/EVENT_FORMAT.md](docs/EVENT_FORMAT.md).
+- Normalization: UTC timestamps (ISO 8601 or epoch), field aliases from
+  Sysmon and Windows Security (`Image`, `UtcTime`, `Computer`...), canonical
+  IP addresses, `DOMAIN\user` splitting, lowercased host and process names.
+  The original record is always kept unchanged.
+- Per-record validation: bad records are rejected with their line number and
+  the reason, and never crash the import or block the good records.
+- De-duplication by stable event ID (taken from the source, or a SHA-256 of
+  the record), so re-importing a file is safe.
+- Request limits: 5 MiB body (enforced on the stream), 10,000 records,
+  64 KiB per record.
+- Event search: pagination; filters by time range, type, severity, host,
+  user, source IP and data origin; case-insensitive text search.
+- **Event Explorer** UI with shareable filter URLs, an event detail view that
+  shows normalized fields next to the original record, and an import page
+  with ingestion history.
+- A deterministic **synthetic baseline dataset** (203 events, three office
+  days, no attack activity) that loads with one click and is labelled
+  `synthetic` everywhere.
+
+**Foundation (Milestone 1)**
 
 - FastAPI backend with an application factory, typed settings from environment
   variables, explicit CORS allow-list and basic security headers.
@@ -96,11 +122,34 @@ no CORS configuration is needed in development.
 
 ### Verify it works
 
-1. Open http://localhost:5173. You land on **System Health**.
-2. The top bar shows `API · OPERATIONAL`, and the Database row shows schema
-   revision `0001`.
-3. Stop the backend and press **Refresh**. The page reports that the backend
-   cannot be reached instead of showing stale data.
+1. Open http://localhost:5173. You land on the **Event Explorer**. With an
+   empty database it offers **Load sample dataset**.
+2. Load it. The page shows `Stored events: 203 synthetic`.
+3. Search for `powershell`: four routine administrator commands appear.
+   Open one to compare the normalized fields with the original Sysmon record.
+4. **Import events → Upload a file** with
+   [docs/examples/malformed-events.jsonl](docs/examples/malformed-events.jsonl).
+   One record is stored, and the other seven are listed with the reason each
+   was rejected.
+5. **System Health** shows the stored-event count. Stop the backend and press
+   **Refresh**: the page reports that the backend cannot be reached instead
+   of showing stale data.
+
+To start from an empty database again, stop the backend, delete
+`backend/data/aegis.db` and run `alembic upgrade head`.
+
+### Troubleshooting
+
+- **`[WinError 10013]` or `address already in use` when starting the backend.**
+  Another process already listens on port 8000, often an earlier backend that is
+  still running. Find it with `netstat -ano | findstr :8000` (Windows) or
+  `lsof -i :8000` (macOS/Linux) and stop it, or start AEGIS on another port
+  (`--port 8001`) and set `AEGIS_BACKEND_URL=http://127.0.0.1:8001` for the
+  frontend dev server.
+- **`Port 5173 is in use`.** The Vite server uses a fixed port so the proxy and
+  CORS settings stay valid. Stop the other process that holds the port.
+- **`npm` is not recognized.** Open a new terminal after installing Node.js so
+  the updated `PATH` is picked up.
 
 ### Configuration
 
@@ -128,7 +177,11 @@ npm run build
 
 - **No authentication.** Anyone who can reach the API can use it. Run it on
   localhost only.
-- No event ingestion, detections, alerts or incidents yet (Milestones 2–4).
+- No detections, alerts or incidents yet (Milestones 3–4).
+- Event import accepts JSON / JSON Lines only. There is no native `.evtx`,
+  syslog or CEF parsing.
+- Text search uses SQL `LIKE` over selected columns. It is fine for tens of
+  thousands of events but is not a full-text index.
 - Docker files are not included yet: Docker was unavailable in the development
   environment, and they will be added and tested in Milestone 8.
 - The GitHub Actions workflow has not yet run on GitHub; it mirrors the local

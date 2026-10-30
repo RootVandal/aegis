@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+
+    # Ingestion limits. They bound memory use per request and keep a single
+    # oversized or hostile upload from stalling the (single-process) API.
+    max_ingest_bytes: int = Field(default=5 * 1024 * 1024, gt=0)
+    max_ingest_records: int = Field(default=10_000, gt=0)
+    max_record_bytes: int = Field(default=64 * 1024, gt=0)
 
     @field_validator("cors_origins", mode="before")
     @classmethod

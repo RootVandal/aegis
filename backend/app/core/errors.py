@@ -21,6 +21,21 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 logger = logging.getLogger("aegis.errors")
 
 
+class AppError(Exception):
+    """An expected failure with a stable, documented error code.
+
+    Raise this from routes or services instead of HTTPException when the
+    client should be able to react to a specific ``code``.
+    """
+
+    def __init__(self, status_code: int, code: str, message: str, details: Any = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+        self.details = details
+
+
 def error_body(code: str, message: str, details: Any = None) -> dict[str, Any]:
     error: dict[str, Any] = {"code": code, "message": message}
     if details is not None:
@@ -61,6 +76,14 @@ async def _validation_exception_handler(request: Request, exc: Exception) -> JSO
     )
 
 
+async def _app_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    assert isinstance(exc, AppError)  # noqa: S101 - narrows the type
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=jsonable_encoder(error_body(exc.code, exc.message, exc.details)),
+    )
+
+
 async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(
@@ -70,6 +93,7 @@ async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSON
 
 
 def register_error_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(AppError, _app_error_handler)
     app.add_exception_handler(StarletteHTTPException, _http_exception_handler)
     app.add_exception_handler(RequestValidationError, _validation_exception_handler)
     app.add_exception_handler(Exception, _unhandled_exception_handler)

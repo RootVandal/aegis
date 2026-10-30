@@ -44,12 +44,46 @@ function isErrorEnvelope(value: unknown): value is ErrorEnvelope {
   )
 }
 
-export async function apiGet<T>(path: string, init?: { signal?: AbortSignal }): Promise<T> {
+export type QueryValue = string | number | undefined | null | readonly string[]
+
+/** Builds "?a=1&b=x&b=y", skipping empty values. Arrays repeat the key. */
+export function toQueryString(params: Record<string, QueryValue>): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '') continue
+    if (Array.isArray(value)) value.forEach((item) => search.append(key, item))
+    else search.append(key, String(value))
+  }
+  const text = search.toString()
+  return text ? `?${text}` : ''
+}
+
+interface RequestOptions {
+  method?: 'GET' | 'POST'
+  body?: BodyInit
+  contentType?: string
+  signal?: AbortSignal
+}
+
+export function apiGet<T>(path: string, init?: { signal?: AbortSignal }): Promise<T> {
+  return apiRequest<T>(path, { signal: init?.signal })
+}
+
+export function apiPost<T>(path: string, body?: BodyInit, contentType?: string): Promise<T> {
+  return apiRequest<T>(path, { method: 'POST', body, contentType })
+}
+
+async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> {
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (options.contentType) headers['Content-Type'] = options.contentType
+
   let response: Response
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { Accept: 'application/json' },
-      signal: init?.signal,
+      method: options.method ?? 'GET',
+      headers,
+      body: options.body,
+      signal: options.signal,
     })
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') throw cause

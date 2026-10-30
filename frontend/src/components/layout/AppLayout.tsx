@@ -8,7 +8,8 @@ import { TopBar } from './TopBar'
 export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
-  const title = NAV_ITEMS.find((item) => item.path === pathname)?.label ?? 'Not found'
+  const section = NAV_ITEMS.find((item) => pathname === item.path || pathname.startsWith(`${item.path}/`))
+  const title = pathname === '/events/import' ? 'Import Events' : (section?.label ?? 'Not found')
 
   return (
     <div className="flex h-full">

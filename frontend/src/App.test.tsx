@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import { App } from './App'
 import { HealthProvider } from './health/HealthContext'
-import { healthResponse, jsonResponse } from './test/fixtures'
+import { healthResponse, jsonResponse, routeFetch } from './test/fixtures'
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -28,11 +28,11 @@ function renderApp(path = '/health') {
 }
 
 describe('navigation', () => {
-  it('redirects the root path to System Health', async () => {
-    fetchMock.mockResolvedValue(jsonResponse(healthResponse()))
+  it('redirects the root path to the Event Explorer', async () => {
+    fetchMock.mockImplementation(routeFetch({}))
     renderApp('/')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'System Health' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Event Explorer' })).toBeInTheDocument()
   })
 
   it('renders planned pages as disabled items, not links', async () => {
@@ -41,8 +41,9 @@ describe('navigation', () => {
     const nav = screen.getByRole('navigation', { name: 'Primary' })
 
     expect(within(nav).getByRole('link', { name: 'System Health' })).toHaveAttribute('href', '/health')
-    expect(within(nav).queryByRole('link', { name: /Event Explorer/ })).not.toBeInTheDocument()
-    expect(within(nav).getByText('Event Explorer').closest('[aria-disabled]')).toHaveAttribute(
+    expect(within(nav).getByRole('link', { name: 'Event Explorer' })).toHaveAttribute('href', '/events')
+    expect(within(nav).queryByRole('link', { name: /Detection Rules/ })).not.toBeInTheDocument()
+    expect(within(nav).getByText('Detection Rules').closest('[aria-disabled]')).toHaveAttribute(
       'aria-disabled',
       'true',
     )

@@ -1,11 +1,14 @@
+import json
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import Response
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
@@ -36,12 +39,35 @@ def migrated_database_url(database_url: str) -> str:
     return database_url
 
 
-def make_settings(database_url: str) -> Settings:
+def make_settings(database_url: str, **overrides: Any) -> Settings:
     return Settings(
         environment="test",
         database_url=database_url,
         cors_origins=["http://localhost:5173"],
+        **overrides,
     )
+
+
+def ingest_jsonl(client: TestClient, records: list[dict[str, Any]], **params: str) -> Response:
+    body = "\n".join(json.dumps(record) for record in records)
+    response: Response = client.post(
+        "/api/v1/ingestion/batches",
+        content=body,
+        params=params,
+        headers={"Content-Type": "application/x-ndjson"},
+    )
+    return response
+
+
+def event(**fields: Any) -> dict[str, Any]:
+    """A minimal valid raw record; override or add fields as needed."""
+    record: dict[str, Any] = {
+        "timestamp": "2026-10-01T12:00:00Z",
+        "event_source": "test",
+        "event_type": "process_creation",
+    }
+    record.update(fields)
+    return record
 
 
 @pytest.fixture

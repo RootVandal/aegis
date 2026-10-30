@@ -16,7 +16,7 @@ from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.routes import health
+from app.api.routes import events, health, ingestion
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.db.session import build_engine, build_session_factory
@@ -69,6 +69,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     api = APIRouter(prefix=API_PREFIX)
     api.include_router(health.router)
+    api.include_router(events.router)
+    api.include_router(ingestion.router)
     app.include_router(api)
 
     return app

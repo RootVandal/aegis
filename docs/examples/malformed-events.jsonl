@@ -1,0 +1,8 @@
+{"event_id":"bad-0001","timestamp":"2026-10-05T08:00:00Z","event_source":"windows-security","event_type":"authentication_success","hostname":"dc-01","username":"j.martin"}
+{"event_id":"bad-0002","timestamp":"yesterday","event_source":"windows-security","event_type":"logoff"}
+{"event_id":"bad-0003","timestamp":"2026-10-05T08:05:00Z","event_source":"sysmon","event_type":"network_connection","source_ip":"10.10.1.300"}
+{"event_id":"bad-0004","timestamp":"2026-10-05T08:06:00Z","event_type":"process_creation"}
+{this line is not JSON}
+["an array is not an event"]
+{"event_id":"bad-0005","timestamp":"2026-10-05T08:07:00Z","event_source":"edr","event_type":"process_creation","severity":"apocalyptic"}
+{"event_id":"bad-0006","timestamp":"2026-10-05T08:08:00Z","event_source":"edr","event_type":"network_connection","destination_port":70000}
