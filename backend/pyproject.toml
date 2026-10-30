@@ -1,0 +1,33 @@
+[project]
+name = "aegis-backend"
+version = "0.1.0"
+description = "AEGIS Security Platform - backend API"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/F: pycodestyle + pyflakes, I: import order, B: bugbear, UP: modern syntax,
+# S: bandit-style security checks.
+select = ["E", "F", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.isort]
+# backend/alembic/ is our migrations folder, not the alembic package itself.
+known-first-party = ["app", "tests"]
+known-third-party = ["alembic"]
+
+[tool.ruff.lint.per-file-ignores]
+# Plain `assert` is the idiom in pytest.
+"tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/"]

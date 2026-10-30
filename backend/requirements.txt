@@ -1,0 +1,9 @@
+# Runtime dependencies for the AEGIS backend.
+# Versions are pinned exactly so every install resolves the same tree.
+# Upgrade deliberately: bump a pin, run the full test suite, then commit.
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
+pydantic-settings==2.16.2
+SQLAlchemy==2.1.6
+alembic==1.20.1

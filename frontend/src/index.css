@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+
+/*
+ * AEGIS design tokens.
+ * Near-black/graphite surfaces, one restrained green for healthy states,
+ * red for critical, amber for warnings. Fonts are system stacks so the
+ * app makes no requests to external font CDNs.
+ */
+@theme {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+
+  --color-canvas: #0a0c0e;
+  --color-surface: #111417;
+  --color-surface-raised: #171b1f;
+  --color-line: #252a30;
+  --color-line-strong: #343a42;
+
+  --color-ink: #e2e5e8;
+  --color-ink-muted: #8b939c;
+  --color-ink-faint: #5d656e;
+
+  --color-ok: #3faa78;
+  --color-ok-dim: #1c3a2c;
+  --color-warn: #d6a033;
+  --color-warn-dim: #3d3018;
+  --color-crit: #e0484e;
+  --color-crit-dim: #431d20;
+  --color-info: #7b93ad;
+  --color-info-dim: #1f2a36;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-size: 14px;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-ok);
+    outline-offset: 2px;
+  }
+}

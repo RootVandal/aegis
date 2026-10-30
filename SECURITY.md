@@ -1,0 +1,50 @@
+# Security
+
+AEGIS is a defensive security learning and portfolio project. This document
+describes its security assumptions and current limitations.
+
+## Intended use
+
+- Run AEGIS **locally** (bound to `127.0.0.1`) for analysis, detection
+  engineering and training on **synthetic** data.
+- Do **not** expose it to the public internet or an untrusted network. There is
+  no authentication.
+- Do not load sensitive production logs into it. It is not designed for
+  handling regulated or confidential data.
+
+## Security assumptions
+
+- The person running AEGIS is its only user.
+- Event content is untrusted. Field values may contain HTML, scripts or
+  control characters and are always rendered as escaped text.
+- AEGIS never executes commands on monitored systems and never sends event data
+  to external services.
+
+## Controls in place (Milestone 1)
+
+- Input validation through Pydantic models on every API endpoint.
+- Database access only through SQLAlchemy (parameterized queries).
+- A uniform error envelope. Unhandled exceptions return a generic message, and
+  tracebacks stay in the server log.
+- Validation errors do not reflect submitted input back to the client.
+- An explicit CORS allow-list. Wildcard origins are rejected at startup.
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and
+  `Referrer-Policy: no-referrer` on API responses.
+- Configuration comes only from environment variables, with no secrets in the
+  repository (`.env` files are git-ignored; see `.env.example`).
+- A frontend lint rule forbids `dangerouslySetInnerHTML`.
+
+## Known limitations
+
+- **No authentication or authorization.**
+- No rate limiting.
+- No request-size limits yet. They arrive with the ingestion API in
+  Milestone 2.
+- No Content-Security-Policy yet.
+- SQLite is a single local file with no encryption at rest.
+
+## Reporting a vulnerability
+
+Please do not open a public issue for security problems. Contact the
+maintainer privately through GitHub (a private security advisory on the
+repository) with a description and steps to reproduce.

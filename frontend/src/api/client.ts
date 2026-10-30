@@ -1,0 +1,85 @@
+/**
+ * Minimal typed HTTP client for the AEGIS API.
+ *
+ * Every failure becomes an ApiError with a stable `code`, mirroring the
+ * backend's `{"error": {"code", "message"}}` envelope. Network failures use
+ * status 0 so the UI can distinguish "backend unreachable" from "backend
+ * answered with an error".
+ */
+
+// Empty by default: in development Vite proxies /api to the backend.
+const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? ''
+
+export class ApiError extends Error {
+  readonly status: number
+  readonly code: string
+
+  constructor(status: number, code: string, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
+
+/** True when the request never got an answer from the AEGIS API itself. */
+export function isBackendUnreachable(error: ApiError): boolean {
+  return error.code === 'network_error' || error.code === 'backend_unavailable'
+}
+
+const GATEWAY_STATUSES = new Set([502, 503, 504])
+
+interface ErrorEnvelope {
+  error: { code: string; message: string }
+}
+
+function isErrorEnvelope(value: unknown): value is ErrorEnvelope {
+  if (typeof value !== 'object' || value === null || !('error' in value)) return false
+  const error = (value as { error: unknown }).error
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    typeof (error as { code?: unknown }).code === 'string' &&
+    typeof (error as { message?: unknown }).message === 'string'
+  )
+}
+
+export async function apiGet<T>(path: string, init?: { signal?: AbortSignal }): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: { Accept: 'application/json' },
+      signal: init?.signal,
+    })
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === 'AbortError') throw cause
+    throw new ApiError(0, 'network_error', 'The AEGIS backend could not be reached.')
+  }
+
+  let body: unknown = null
+  try {
+    body = await response.json()
+  } catch {
+    // Non-JSON body (for example a proxy error page). Handled below.
+  }
+
+  if (!response.ok) {
+    if (isErrorEnvelope(body)) {
+      throw new ApiError(response.status, body.error.code, body.error.message)
+    }
+    if (GATEWAY_STATUSES.has(response.status)) {
+      // A proxy in front of the API (the Vite dev server, nginx, ...) answered
+      // because it could not reach the backend: the API itself never replied.
+      throw new ApiError(
+        response.status,
+        'backend_unavailable',
+        `The AEGIS backend could not be reached (gateway returned HTTP ${response.status}).`,
+      )
+    }
+    throw new ApiError(response.status, 'http_error', `Request failed with HTTP ${response.status}.`)
+  }
+  if (body === null) {
+    throw new ApiError(response.status, 'invalid_response', 'The backend returned an invalid response.')
+  }
+  return body as T
+}

@@ -1,0 +1,7 @@
+-r requirements.txt
+
+# Testing, linting and static type checking.
+pytest==9.2.0
+httpx==0.28.1
+ruff==0.17.3
+mypy==2.4.1
