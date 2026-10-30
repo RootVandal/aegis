@@ -27,8 +27,10 @@ from app.api.routes import (
     ingestion,
     scenarios,
 )
+from app.api.routes import settings as settings_routes
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
+from app.core.limits import BodySizeLimitMiddleware
 from app.db.session import build_engine, build_session_factory
 
 API_PREFIX = "/api/v1"
@@ -61,7 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "PATCH", "DELETE"],
+        allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
         allow_headers=["Content-Type"],
     )
 
@@ -73,7 +75,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "no-referrer")
+        # API responses are data, never documents to render: forbid everything.
+        # The interactive docs (/docs, /redoc) load scripts and are left alone.
+        if request.url.path.startswith(API_PREFIX):
+            response.headers.setdefault(
+                "Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'"
+            )
         return response
+
+    # Registered last so it runs first (outermost): oversized bodies are refused
+    # before any other middleware or route reads them.
+    app.add_middleware(BodySizeLimitMiddleware)
 
     register_error_handlers(app)
 
@@ -87,6 +99,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(dashboard.router)
     api.include_router(scenarios.router)
     api.include_router(evaluation.router)
+    api.include_router(settings_routes.router)
     app.include_router(api)
 
     return app

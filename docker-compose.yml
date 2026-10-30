@@ -1,0 +1,31 @@
+# AEGIS: backend API + frontend, for local use.
+# NOTE: written for the 1.0 release but NOT run on the development machine
+# (Docker was unavailable there). See README "Docker".
+#
+#   docker compose up --build
+#   open http://127.0.0.1:8080
+#
+# Ports are published on 127.0.0.1 only: AEGIS has no authentication and must
+# not be reachable from other machines.
+
+services:
+  backend:
+    build: ./backend
+    environment:
+      AEGIS_ENVIRONMENT: production
+      AEGIS_CORS_ORIGINS: http://127.0.0.1:8080
+    volumes:
+      - aegis-data:/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+
+volumes:
+  aegis-data:
