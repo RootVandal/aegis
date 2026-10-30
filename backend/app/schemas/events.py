@@ -78,11 +78,22 @@ class EventSummary(BaseModel):
     scenario_id: str | None
 
 
+class AlertRef(BaseModel):
+    id: int
+    rule_id: str
+    title: str
+    severity: Severity
+    status: str
+
+
 class EventDetail(EventSummary):
     ingested_at: datetime
     batch_id: int | None
     raw_event: dict[str, Any]
     normalized_fields: dict[str, Any]
+    alerts: list[AlertRef] = Field(
+        default_factory=list, description="Alerts that cite this event as evidence."
+    )
 
 
 class EventPage(BaseModel):

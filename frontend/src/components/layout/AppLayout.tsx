@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 
 import { NAV_ITEMS } from '../../navigation'
@@ -36,7 +36,9 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar title={title} onOpenMenu={() => setMenuOpen(true)} />
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <Suspense fallback={<p className="p-6 text-[13px] text-ink-muted">Loading page…</p>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

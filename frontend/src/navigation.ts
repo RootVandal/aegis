@@ -14,7 +14,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Overview', path: '/overview', status: 'planned', milestone: 5 },
+  { label: 'Overview', path: '/overview', status: 'available' },
   { label: 'Event Explorer', path: '/events', status: 'available' },
   { label: 'Detection Rules', path: '/rules', status: 'available' },
   { label: 'Alerts', path: '/alerts', status: 'available' },

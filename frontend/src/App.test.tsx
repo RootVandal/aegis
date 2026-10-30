@@ -28,11 +28,11 @@ function renderApp(path = '/health') {
 }
 
 describe('navigation', () => {
-  it('redirects the root path to the Event Explorer', async () => {
+  it('redirects the root path to the Overview', async () => {
     fetchMock.mockImplementation(routeFetch({}))
     renderApp('/')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Event Explorer' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument()
   })
 
   it('renders planned pages as disabled items, not links', async () => {

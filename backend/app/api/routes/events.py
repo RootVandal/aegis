@@ -1,11 +1,20 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.db.session import get_db
-from app.schemas.events import EventDetail, EventFacets, EventFilters, EventPage, EventSummary
+from app.models import Alert, alert_events
+from app.schemas.events import (
+    AlertRef,
+    EventDetail,
+    EventFacets,
+    EventFilters,
+    EventPage,
+    EventSummary,
+)
 from app.services.event_query import event_facets, get_event, search_events
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -38,4 +47,16 @@ def event_detail(event_id: str, db: Annotated[Session, Depends(get_db)]) -> Even
     event = get_event(db, event_id)
     if event is None:
         raise AppError(404, "event_not_found", f"No event with ID {event_id!r}.")
-    return EventDetail.model_validate(event)
+    citing = db.scalars(
+        select(Alert)
+        .join(alert_events, alert_events.c.alert_id == Alert.id)
+        .where(alert_events.c.event_id == event.id)
+        .order_by(Alert.id)
+    )
+    detail = EventDetail.model_validate(event)
+    detail.alerts = [
+        AlertRef(id=a.id, rule_id=a.rule_id, title=a.title, severity=a.severity,
+                 status=a.status.value)
+        for a in citing
+    ]  # fmt: skip
+    return detail

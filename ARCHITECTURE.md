@@ -283,6 +283,31 @@ therefore run with enforcement off and finish with `PRAGMA
 foreign_key_check`, failing loudly on any violation.
 `tests/test_migrations.py` upgrades a populated database to guard this.
 
+## Overview dashboard (Milestone 5)
+
+`GET /api/v1/dashboard?range=all|30d|7d|24h` (`services/dashboard.py`)
+computes everything per request with aggregate SQL. Nothing is cached or
+precomputed, so the numbers always agree with the lists they link to.
+
+- **Two kinds of metric.** *Current state* (new/open alerts, open incidents)
+  ignores the range. *In range* (events, alerts raised, severity mix, top
+  rules, events over time) uses it. Alerts fall into a range by the time of
+  their evidence (`last_seen`), not by when detection ran.
+- **Ranges are anchored to now.** The window is never moved to where the data
+  happens to be. The response includes the newest event time, so the UI can
+  explain an empty range (for example, synthetic data from three weeks ago).
+- **Events over time.** Buckets are hours (span ≤ 2 days), days (≤ 120 days)
+  or months, computed with SQLite `strftime`. Empty buckets are filled with
+  zeros so a gap on the axis means "no events". This is SQLite-specific SQL,
+  isolated in one function.
+- **Charts.** Recharts renders the time series as stacked columns
+  (synthetic vs. imported). The colors are two validated categorical slots
+  (CVD ΔE 26.8 against the panel surface); a legend, tooltip and table view
+  mean color is never the only channel. Severity and rule counts are
+  single-hue bars, with identity carried by the label beside each bar. A
+  multi-hue severity palette was checked and rejected: high and medium were
+  too close (ΔE 13.6).
+
 ## Frontend
 
 - **Routing.** React Router. `src/navigation.ts` is the single list of pages.

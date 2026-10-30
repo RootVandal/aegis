@@ -142,6 +142,7 @@ describe('Event detail', () => {
     batch_id: 7,
     raw_event: { Image: 'C:\\Windows\\powershell.exe', CommandLine: '<script>alert("x")</script>' },
     normalized_fields: { notes: ['timestamp had no timezone; assumed UTC'], user_domain: 'CORP' },
+    alerts: [{ id: 6, rule_id: 'AEGIS-EXEC-001', title: 'Suspicious PowerShell', severity: 'high' as const, status: 'new' }],
   }
 
   it('shows normalized fields, the original record and normalization notes', async () => {
@@ -149,6 +150,7 @@ describe('Event detail', () => {
     renderAt('/events/evt-1')
 
     expect(await screen.findByText('Original record (as ingested)')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '#6 Suspicious PowerShell' })).toHaveAttribute('href', '/alerts/6')
     expect(screen.getByText('Normalization notes:').parentElement).toHaveTextContent(
       'timestamp had no timezone; assumed UTC',
     )

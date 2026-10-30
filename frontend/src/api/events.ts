@@ -33,6 +33,8 @@ export interface EventDetail extends EventSummary {
   batch_id: number | null
   raw_event: Record<string, unknown>
   normalized_fields: Record<string, unknown>
+  /** Alerts that cite this event as evidence. */
+  alerts: { id: number; rule_id: string; title: string; severity: Severity; status: string }[]
 }
 
 export interface EventPage {

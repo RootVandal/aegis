@@ -22,12 +22,29 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | 2 | Event pipeline: normalization, JSON/JSONL ingestion, search | **Done** |
 | 3 | Detection engine: 8 deterministic rules with explanations | **Done** |
 | 4 | Alert and incident workflows, correlation, timelines | **Done** |
-| 5 | Overview dashboard and remaining UI | Planned |
+| 5 | Overview dashboard and remaining UI | **Done** |
 | 6 | Scenario Lab (4 training scenarios) | Planned |
 | 7 | Detection evaluation lab (precision / recall on labeled data) | Planned |
 | 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
 
-### What works today (Milestones 1–4)
+### What works today (Milestones 1–5)
+
+**Overview dashboard (Milestone 5)**
+
+- The landing page summarizes stored data, all computed from the database at
+  request time: open and new alerts, open incidents, events and alerts in the
+  selected range, events over time (split into synthetic and imported),
+  alerts by severity, most frequently triggered rules, and recent alerts,
+  incidents and ingestion activity.
+- Time ranges (all time, last 30 days, 7 days, 24 hours) are anchored to the
+  real current time. The page shows how old the newest event is and explains
+  when a range is empty, instead of shifting the window to fit the data.
+- "Now" metrics (open alerts, incidents) are kept apart from range-based ones.
+- With an empty database it offers the bundled synthetic datasets. Nothing
+  refreshes or animates by itself: no simulated live telemetry.
+- Every figure links to the list behind it, and the chart has a table view.
+- The event detail page lists the alerts that cite the event, so navigation
+  works in both directions.
 
 **Investigation workflow (Milestone 4)**
 
@@ -126,7 +143,7 @@ services, which use SQLAlchemy models. See [ARCHITECTURE.md](ARCHITECTURE.md).
 | Area | Choice |
 | --- | --- |
 | Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.1, Alembic, SQLite |
-| Frontend | React 19, TypeScript 6, Vite 8, Tailwind CSS 4, React Router 7 |
+| Frontend | React 19, TypeScript 6, Vite 8, Tailwind CSS 4, React Router 7, Recharts 3 |
 | Testing | pytest, HTTPX (via FastAPI `TestClient`), Vitest, React Testing Library |
 | Quality | Ruff (lint + format), mypy `--strict`, ESLint, `tsc` |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) |
@@ -167,9 +184,10 @@ no CORS configuration is needed in development.
 
 ### Verify it works
 
-1. Open http://localhost:5173. You land on the **Event Explorer**. With an
-   empty database it offers **Load sample dataset**.
-2. Load it. The page shows `Stored events: 203 synthetic`.
+1. Open http://localhost:5173. You land on the **Overview**. With an empty
+   database it offers the sample datasets: load **baseline office activity**.
+   The dashboard fills with 203 synthetic events and no alerts.
+2. Open **Event Explorer**. It shows `Stored events: 203 synthetic`.
 3. Search for `powershell`: four routine administrator commands appear.
    Open one to compare the normalized fields with the original Sysmon record.
 4. **Import events → Upload a file** with

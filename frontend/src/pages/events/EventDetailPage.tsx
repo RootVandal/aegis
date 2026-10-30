@@ -54,6 +54,26 @@ function EventView({ event }: { event: EventDetail }) {
         <span className="font-mono text-[12px] text-ink-muted">{formatUtc(event.timestamp)}</span>
       </header>
 
+      <Panel title={`Cited by alerts (${event.alerts.length})`}>
+        {event.alerts.length === 0 ? (
+          <p className="text-[12px] text-ink-muted">No alert uses this event as evidence.</p>
+        ) : (
+          <ul className="space-y-1 text-[12px]">
+            {event.alerts.map((alert) => (
+              <li key={alert.id} className="flex flex-wrap items-center gap-2">
+                <SeverityBadge severity={alert.severity} />
+                <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-ok">
+                  #{alert.id} {alert.title}
+                </Link>
+                <span className="font-mono text-ink-faint">
+                  {alert.rule_id} · {alert.status.replace('_', ' ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
       {notes.length > 0 && (
         <div className="rounded-md border border-warn/40 bg-warn-dim px-4 py-2 text-[12px] text-warn">
           <span className="font-medium">Normalization notes:</span> {notes.join('; ')}
