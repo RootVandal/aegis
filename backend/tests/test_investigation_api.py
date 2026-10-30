@@ -244,6 +244,35 @@ def test_incident_lifecycle_requires_an_assessment(lab: TestClient) -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    ("verdict", "expected"),
+    [("true_positive", "resolved"), ("false_positive", "false_positive")],
+)
+def test_resolving_an_incident_closes_its_open_alerts(
+    lab: TestClient, verdict: str, expected: str
+) -> None:
+    open_alert = alert_for(lab, "AEGIS-AUTH-001")
+    closed_alert = alert_for(lab, "AEGIS-AUTH-002")
+    incident = new_incident(lab, [open_alert["id"], closed_alert["id"]])
+    patch_status(lab, closed_alert["id"], "resolved", "Handled separately.")
+    url = f"/api/v1/incidents/{incident['id']}"
+    lab.patch(url, json={"status": "investigating"})
+    lab.put(f"{url}/assessment", json={"verdict": verdict, "final_assessment": "a",
+                                       "resolution_summary": "b"})  # fmt: skip
+
+    lab.patch(url, json={"status": "resolved"})
+
+    closed = lab.get(f"/api/v1/alerts/{open_alert['id']}").json()
+    assert closed["status"] == expected
+    assert (
+        closed["status_changes"][-1]["reason"]
+        == f"Incident #{incident['id']} resolved ({verdict})."
+    )
+    # An alert that was already closed keeps its own outcome and history.
+    untouched = lab.get(f"/api/v1/alerts/{closed_alert['id']}").json()
+    assert untouched["status_changes"][-1]["reason"] == "Handled separately."
+
+
 def test_incident_validation(lab: TestClient) -> None:
     assert lab.post("/api/v1/incidents", json={"title": ""}).status_code == 422
     assert lab.post("/api/v1/incidents", json={"title": "x", "alert_ids": [999]}).status_code == 404

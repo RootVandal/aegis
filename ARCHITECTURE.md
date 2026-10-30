@@ -198,12 +198,90 @@ still found.
 | `detection_runs` | Trigger, counts, and per-rule version/parameters/findings, which make each run reproducible. |
 | `rule_settings` | Enabled flag and parameter overrides per rule. |
 
-### Alert lifecycle (current)
+## Investigation workflow (Milestone 4)
 
-Alerts are created with status `new`. The statuses `acknowledged`,
-`investigating`, `resolved` and `false_positive` exist in the schema; the
-workflow to change them, investigation notes and incident links arrive in
-Milestone 4.
+All state changes go through `app/investigation/workflow.py`, so the rules
+live in one place and route handlers stay thin.
+
+### Alert lifecycle
+
+```
+new ──► acknowledged ──► investigating ──► resolved
+ │            │                │    └────► false_positive
+ └────────────┴────────────────┴─────────► resolved / false_positive
+resolved / false_positive ──(reopen, reason required)──► investigating
+```
+
+- Closing (`resolved`, `false_positive`) or reopening requires a reason.
+- Every change is stored in `alert_status_changes` (from, to, reason,
+  author, time). Notes are stored in `alert_notes`.
+- Linking a `new` or `acknowledged` alert to an incident moves it to
+  `investigating`. Resolving the incident closes its still-open alerts:
+  `false_positive` when the verdict is false positive, otherwise `resolved`.
+- Status changes never touch the alert's evidence links.
+
+### Incident lifecycle
+
+```
+new ──► investigating ──► contained ──► resolved
+              │  ▲             │            │
+              │  └─────────────┘            │
+              └─────────────► resolved      └──(reopen)──► investigating
+```
+
+- Resolving requires a recorded **final assessment**: a verdict
+  (`true_positive`, `benign_activity`, `false_positive`, `inconclusive`),
+  the reasoning and evidence, and a resolution summary. This enforces the
+  Milestone 4 acceptance criterion: an investigation ends with a documented
+  assessment.
+- Reopening keeps the assessment and clears `resolved_at`.
+- An alert belongs to at most one incident (`alerts.incident_id`).
+- Evidence (`incident_evidence`) links an event with the reason it matters,
+  using `ON DELETE RESTRICT`.
+- Notes have a kind: `note` or `hypothesis`. Hypotheses are labeled
+  "unverified" in the UI and the report, so an analyst's guess is never
+  presented as fact.
+- `incident_history` is append-only and records creation, status changes,
+  linked or unlinked alerts, evidence, notes and assessments.
+
+### Correlation
+
+`app/investigation/correlation.py` is a pure function, like the detection
+engine. Given seed events (an alert's evidence or an incident's events):
+
+1. Only events within `window` before the first or after the last seed
+   event are considered. **Time is a filter, never a reason.**
+2. An event is correlated only if it shares at least one selected entity:
+   host, user (case-insensitive), IP address (source or destination), or
+   scenario ID.
+3. Every result lists its reasons (criterion and shared value) and its
+   position in time (before, during or after the seed, and how far).
+
+The API adds *related alerts*: other alerts that cite a correlated event.
+This covers the "related detection rules" criterion.
+
+Limitations: there is no weighting or rarity scoring. A busy domain
+controller or a shared NAT address links many events weakly, so the
+analyst narrows the result with the criteria toggles.
+
+### Timeline and report
+
+The incident timeline merges alert evidence, recorded evidence and
+(optionally) correlated events, ordered by `(timestamp, event_id)`. Each
+entry states why it is present and which rules alerted on it. The Markdown
+report is generated from the stored data only. Every value is escaped,
+because event and note text is untrusted and could otherwise inject links
+or HTML into a rendered report.
+
+### Migrations and data integrity
+
+SQLite cannot alter most constraints in place. Alembic's batch mode rebuilds
+the table instead (copy, `DROP`, rename). With foreign keys enforced, that
+`DROP` would fire `ON DELETE CASCADE` and silently delete child rows. This
+was found in Milestone 4 while adding `alerts.incident_id`. Migrations
+therefore run with enforcement off and finish with `PRAGMA
+foreign_key_check`, failing loudly on any violation.
+`tests/test_migrations.py` upgrades a populated database to guard this.
 
 ## Frontend
 
@@ -232,7 +310,8 @@ Milestone 4.
 | Parsing / normalization | pytest | every alias, timestamp format, invalid-field message, de-dup ID stability |
 | API | pytest + `TestClient` (HTTPX) | health states, error envelope, CORS, security headers, ingestion limits, filters, search escaping |
 | Detection rules | pytest on `EventRecord`s | positive, negative and edge cases per rule; thresholds and windows; parameter validation; labeled dataset gives exactly the expected findings; baseline gives none; order independence; documentation completeness; generated catalog is up to date |
-| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content; rule configuration and alert explanations, against a path-routing `fetch` mock |
+| Investigation | pytest | alert/incident transitions and required reasons/assessment; correlation criteria, window bounds and "time alone never correlates"; timeline sources; report escaping; an end-to-end acceptance test from alert to resolved incident |
+| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content; rule configuration and alert explanations; alert triage, investigation workspace and incident workflow, against a path-routing `fetch` mock |
 
 Backend tests run against real SQLite files created from the real migrations,
 not mocks, so they exercise the same SQL the app runs.

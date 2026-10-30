@@ -62,7 +62,7 @@ export function toQueryString(params: Record<string, QueryValue>): string {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH'
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: BodyInit
   contentType?: string
   signal?: AbortSignal
@@ -76,8 +76,12 @@ export function apiPost<T>(path: string, body?: BodyInit, contentType?: string):
   return apiRequest<T>(path, { method: 'POST', body, contentType })
 }
 
-/** POST/PATCH with a JSON body (or no body). */
-export function apiRequestJson<T>(method: 'POST' | 'PATCH', path: string, body?: unknown): Promise<T> {
+/** POST/PATCH/PUT/DELETE with a JSON body (or no body). */
+export function apiRequestJson<T>(
+  method: 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+  path: string,
+  body?: unknown,
+): Promise<T> {
   return apiRequest<T>(path, {
     method,
     body: body === undefined ? undefined : JSON.stringify(body),

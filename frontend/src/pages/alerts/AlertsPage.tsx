@@ -7,7 +7,7 @@ import { BUTTON, ErrorNotice, INPUT, Panel } from '../../components/Panel'
 import { formatCount, formatUtc } from '../../lib/format'
 import { useApi } from '../../lib/useApi'
 
-const KEYS = ['status', 'severity', 'rule_id', 'page'] as const satisfies readonly (keyof AlertFilters)[]
+const KEYS = ['status', 'severity', 'rule_id', 'q', 'sort', 'page'] as const satisfies readonly (keyof AlertFilters)[]
 const PAGE_SIZE = 50
 
 export function AlertsPage() {
@@ -33,18 +33,32 @@ export function AlertsPage() {
   return (
     <div className="space-y-4 p-4 md:p-6">
       <p className="text-[13px] text-ink-muted">
-        Alerts are created by the detection rules from stored events. Status changes, notes and incidents arrive in
-        milestone 4; for now every alert is shown with its current status.
+        Alerts are created by the detection rules from stored events. Open an alert to triage it, add notes,
+        investigate related activity or turn it into an incident.
       </p>
 
       <Panel title="Filters">
-        <div className="grid grid-cols-1 gap-3 text-[12px] sm:grid-cols-3">
+        <form
+          className="mb-3 flex gap-2"
+          aria-label="Search alerts"
+          onSubmit={(e) => {
+            e.preventDefault()
+            set('q', (new FormData(e.currentTarget).get('q') as string).trim() || undefined)
+          }}
+        >
+          <input name="q" aria-label="Search titles" className={INPUT} defaultValue={filters.q ?? ''} key={filters.q ?? ''}
+                 placeholder="Search alert titles…" />
+          <button type="submit" className={BUTTON}>Search</button>
+        </form>
+        <div className="grid grid-cols-1 gap-3 text-[12px] sm:grid-cols-4">
           <Select label="Status" value={filters.status} onChange={(v) => set('status', v)}
                   options={ALERT_STATUSES.map((s) => [s, s.replace('_', ' ')])} />
           <Select label="Severity" value={filters.severity} onChange={(v) => set('severity', v)}
                   options={SEVERITIES.map((s) => [s, s])} />
           <Select label="Rule" value={filters.rule_id} onChange={(v) => set('rule_id', v)}
                   options={(rules.data ?? []).map((r) => [r.id, `${r.id} — ${r.name}`])} />
+          <Select label="Sort" value={filters.sort} onChange={(v) => set('sort', v)} anyLabel="Last seen (newest)"
+                  options={[['severity_desc', 'Severity (highest)'], ['created_desc', 'Created (newest)']]} />
         </div>
       </Panel>
 
@@ -72,7 +86,7 @@ export function AlertsPage() {
               <table className="w-full min-w-[920px] text-left text-[12px]">
                 <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
                   <tr>
-                    {['#', 'Severity', 'Alert', 'Rule', 'Hosts', 'Users', 'Events', 'Last seen (UTC)', 'Status'].map(
+                    {['#', 'Severity', 'Alert', 'Rule', 'Hosts', 'Users', 'Events', 'Last seen (UTC)', 'Status', 'Incident'].map(
                       (h) => (
                         <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">
                           {h}
@@ -105,6 +119,15 @@ export function AlertsPage() {
                         {formatUtc(alert.last_seen).replace(' UTC', '')}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1.5 text-ink-muted">{alert.status.replace('_', ' ')}</td>
+                      <td className="px-3 py-1.5 font-mono">
+                        {alert.incident_id ? (
+                          <Link to={`/incidents/${alert.incident_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-ok">
+                            #{alert.incident_id}
+                          </Link>
+                        ) : (
+                          <span className="text-ink-faint">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -141,17 +164,19 @@ function Select({
   value,
   options,
   onChange,
+  anyLabel = 'Any',
 }: {
   label: string
   value: string | undefined
   options: [string, string][]
   onChange: (value: string | undefined) => void
+  anyLabel?: string
 }) {
   return (
     <label className="block">
       <span className="mb-1 block text-ink-faint">{label}</span>
       <select className={INPUT} value={value ?? ''} onChange={(e) => onChange(e.target.value || undefined)}>
-        <option value="">Any</option>
+        <option value="">{anyLabel}</option>
         {options.map(([optionValue, text]) => (
           <option key={optionValue} value={optionValue}>
             {text}

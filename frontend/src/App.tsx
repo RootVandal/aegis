@@ -6,6 +6,9 @@ import { AlertsPage } from './pages/alerts/AlertsPage'
 import { EventDetailPage } from './pages/events/EventDetailPage'
 import { EventExplorerPage } from './pages/events/EventExplorerPage'
 import { ImportPage } from './pages/events/ImportPage'
+import { IncidentDetailPage } from './pages/incidents/IncidentDetailPage'
+import { IncidentsPage } from './pages/incidents/IncidentsPage'
+import { InvestigationPage } from './pages/investigation/InvestigationPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RuleDetailPage } from './pages/rules/RuleDetailPage'
 import { RulesPage } from './pages/rules/RulesPage'
@@ -24,6 +27,9 @@ export function App() {
         <Route path="/rules/:ruleId" element={<RuleDetailPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/alerts/:alertId" element={<AlertDetailPage />} />
+        <Route path="/incidents" element={<IncidentsPage />} />
+        <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
+        <Route path="/investigation" element={<InvestigationPage />} />
         <Route path="/health" element={<SystemHealthPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

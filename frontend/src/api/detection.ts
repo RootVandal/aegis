@@ -86,6 +86,7 @@ export interface AlertSummary {
   hosts: string[]
   users: string[]
   ips: string[]
+  incident_id: number | null
 }
 
 export interface Explanation {
@@ -113,6 +114,16 @@ export interface AlertDetail extends AlertSummary {
   rule_params: Record<string, unknown>
   detection_run_id: number | null
   events: EventSummary[]
+  notes: { id: number; author: string; body: string; created_at: string }[]
+  status_changes: {
+    from_status: AlertStatus
+    to_status: AlertStatus
+    reason: string | null
+    author: string
+    changed_at: string
+  }[]
+  incident: { id: number; title: string; status: string } | null
+  allowed_transitions: AlertStatus[]
 }
 
 export interface AlertPage {
@@ -126,6 +137,8 @@ export interface AlertFilters {
   status?: string
   severity?: string
   rule_id?: string
+  q?: string
+  sort?: string
   page?: string
 }
 
@@ -158,4 +171,45 @@ export function fetchAlerts(filters: AlertFilters, signal?: AbortSignal): Promis
 
 export function fetchAlert(id: string, signal?: AbortSignal): Promise<AlertDetail> {
   return apiGet<AlertDetail>(`/api/v1/alerts/${encodeURIComponent(id)}`, { signal })
+}
+
+export function updateAlertStatus(id: number, status: AlertStatus, reason?: string): Promise<AlertDetail> {
+  return apiRequestJson<AlertDetail>('PATCH', `/api/v1/alerts/${id}`, { status, reason: reason || undefined })
+}
+
+export function addAlertNote(id: number, body: string): Promise<unknown> {
+  return apiRequestJson('POST', `/api/v1/alerts/${id}/notes`, { body })
+}
+
+export type Criterion = 'host' | 'user' | 'ip' | 'scenario'
+export const CRITERIA: readonly Criterion[] = ['host', 'user', 'ip', 'scenario']
+
+export interface CorrelatedEvent {
+  event: EventSummary
+  reasons: { criterion: string; value: string; description: string }[]
+  relation: 'before' | 'during' | 'after'
+  offset_seconds: number
+  explanation: string
+  alert_ids: number[]
+  rule_ids: string[]
+}
+
+export interface Correlation {
+  window_minutes: number
+  criteria: string[]
+  seed_event_ids: string[]
+  total: number
+  truncated: boolean
+  events: CorrelatedEvent[]
+  related_alerts: { alert: AlertSummary; shared_event_ids: string[] }[]
+}
+
+export function fetchCorrelation(
+  alertId: string,
+  windowMinutes: number,
+  criteria: readonly Criterion[],
+  signal?: AbortSignal,
+): Promise<Correlation> {
+  const query = toQueryString({ window_minutes: windowMinutes, criteria })
+  return apiGet<Correlation>(`/api/v1/alerts/${encodeURIComponent(alertId)}/correlation${query}`, { signal })
 }

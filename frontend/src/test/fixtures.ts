@@ -69,6 +69,7 @@ export function routeFetch(handlers: Record<string, Handler>) {
     'GET /api/v1/health': () => jsonResponse(healthResponse()),
     'GET /api/v1/events/facets': () => jsonResponse(EMPTY_FACETS),
     'GET /api/v1/events': () => jsonResponse(eventPage([])),
+    'GET /api/v1/incidents': () => jsonResponse({ items: [], total: 0, page: 1, page_size: 50 }),
   }
   const routes = { ...defaults, ...handlers }
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {

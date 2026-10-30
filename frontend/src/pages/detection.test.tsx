@@ -197,6 +197,11 @@ describe('Alerts', () => {
     ips: ['203.0.113.50'],
     rule_params: { expected_ports: [80, 443] },
     detection_run_id: 3,
+    incident_id: null,
+    notes: [],
+    status_changes: [],
+    incident: null,
+    allowed_transitions: ['acknowledged', 'investigating', 'resolved', 'false_positive'],
     events: [eventSummary({ event_id: 'syn-lab-035', event_type: 'network_connection' })],
     explanation: {
       what: 'An outbound network connection matched one or more documented conditions.',

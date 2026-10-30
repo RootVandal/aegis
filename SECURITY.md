@@ -43,13 +43,20 @@ describes its security assumptions and current limitations.
 - Detection rules never execute anything: they only read stored events.
   Rule parameters are validated against each rule's schema, and ATT&CK
   mappings can only reference verified techniques.
-- Evidence integrity: an event referenced by an alert cannot be deleted
-  (database `RESTRICT` constraint), and alert explanations are stored as
-  snapshots.
+- Evidence integrity: an event referenced by an alert or recorded as incident
+  evidence cannot be deleted (database `RESTRICT` constraint). Alert
+  explanations are stored as snapshots, and alert and incident histories are
+  append-only through the API.
+- Migrations verify referential integrity (`PRAGMA foreign_key_check`) after
+  running, so a schema change cannot silently drop evidence links.
+- Incident reports escape all Markdown/HTML-significant characters from
+  event data and analyst text.
 
 ## Known limitations
 
-- **No authentication or authorization.**
+- **No authentication or authorization.** The `author` recorded on notes,
+  status changes and history is a client-supplied label, not a verified
+  identity, so the audit trail is not trustworthy against a malicious user.
 - No rate limiting.
 - Request-size limits apply to the ingestion endpoint only. Other endpoints
   accept small JSON bodies and have no explicit cap yet.

@@ -246,6 +246,7 @@ def _change_incident_status(incident: Incident, to_status: IncidentStatus, autho
                 "Record the final assessment before resolving. Missing: " + ", ".join(missing),
             )
         incident.resolved_at = utc_now()
+        _close_linked_alerts(incident, author)
     elif incident.status == IncidentStatus.RESOLVED:
         incident.resolved_at = None  # reopened
     _history(
@@ -257,6 +258,28 @@ def _change_incident_status(incident: Incident, to_status: IncidentStatus, autho
         new=to_status.value,
     )
     incident.status = to_status
+
+
+def _close_linked_alerts(incident: Incident, author: str) -> None:
+    """Resolving an incident closes its still-open alerts with the same outcome.
+
+    Reopening the incident does not reopen them automatically: each alert can
+    be reopened individually, with its own reason.
+    """
+    assert incident.verdict is not None  # noqa: S101 - checked by the caller
+    target = (
+        AlertStatus.FALSE_POSITIVE
+        if incident.verdict == AssessmentVerdict.FALSE_POSITIVE
+        else AlertStatus.RESOLVED
+    )
+    for alert in incident.alerts:
+        if alert.status not in CLOSED_ALERT_STATUSES:
+            _record_alert_status(
+                alert,
+                target,
+                f"Incident #{incident.id} resolved ({incident.verdict.value}).",
+                author,
+            )
 
 
 def add_alerts(

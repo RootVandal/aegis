@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { fetchAlert, type AlertDetail } from '../../api/detection'
@@ -6,19 +6,23 @@ import { OriginBadge, SeverityBadge } from '../../components/Badges'
 import { ErrorNotice, Panel } from '../../components/Panel'
 import { formatUtc } from '../../lib/format'
 import { useApi } from '../../lib/useApi'
+import { AlertTriage } from './AlertTriage'
 
 export function AlertDetailPage() {
   const { alertId = '' } = useParams()
   const alert = useApi((signal) => fetchAlert(alertId, signal), alertId)
+  // Triage actions return the updated alert; show it without re-fetching.
+  const [updated, setUpdated] = useState<AlertDetail | null>(null)
+  const current = updated && String(updated.id) === alertId ? updated : alert.data
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
       <Link to="/alerts" className="text-[12px] text-ink-muted hover:text-ink">
         ← Alerts
       </Link>
-      {alert.status === 'loading' && <p className="text-[13px] text-ink-muted">Loading alert…</p>}
+      {alert.status === 'loading' && !current && <p className="text-[13px] text-ink-muted">Loading alert…</p>}
       {alert.status === 'error' && <ErrorNotice error={alert.error} what="this alert" />}
-      {alert.status === 'success' && <AlertView alert={alert.data} />}
+      {current && <AlertView alert={current} onChange={setUpdated} />}
     </div>
   )
 }
@@ -27,7 +31,7 @@ export function AlertDetailPage() {
  * The explanation is the snapshot stored when the alert was created: it is
  * derived from the matched events and the rule, never generated afterwards.
  */
-function AlertView({ alert }: { alert: AlertDetail }) {
+function AlertView({ alert, onChange }: { alert: AlertDetail; onChange: (alert: AlertDetail) => void }) {
   const x = alert.explanation
   return (
     <>
@@ -49,6 +53,8 @@ function AlertView({ alert }: { alert: AlertDetail }) {
       </header>
 
       <p className="rounded-md border border-line bg-surface px-4 py-2 text-[12px] text-ink-muted">{x.disclaimer}</p>
+
+      <AlertTriage alert={alert} onChange={onChange} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Section n={1} title="What the rule detected">

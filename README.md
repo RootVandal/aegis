@@ -21,13 +21,34 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | 1 | Working foundation: FastAPI, React, SQLite, migrations, health checks | **Done** |
 | 2 | Event pipeline: normalization, JSON/JSONL ingestion, search | **Done** |
 | 3 | Detection engine: 8 deterministic rules with explanations | **Done** |
-| 4 | Alert and incident workflows, correlation, timelines | Planned |
+| 4 | Alert and incident workflows, correlation, timelines | **Done** |
 | 5 | Overview dashboard and remaining UI | Planned |
 | 6 | Scenario Lab (4 training scenarios) | Planned |
 | 7 | Detection evaluation lab (precision / recall on labeled data) | Planned |
 | 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
 
-### What works today (Milestones 1–3)
+### What works today (Milestones 1–4)
+
+**Investigation workflow (Milestone 4)**
+
+- **Alert triage:** validated status transitions (new → acknowledged →
+  investigating → resolved / false positive), a required reason for closing
+  or reopening, notes, full status history, title search and severity sort.
+- **Explainable correlation:** the Investigation workspace shows events that
+  share a host, user, IP address or scenario with an alert's evidence inside
+  a chosen time window, with the reason for every link. Time proximity alone
+  never links events.
+- **Incidents:** create one from an alert (or several related alerts), link
+  and unlink alerts, record events as evidence with a reason, and keep notes
+  and *hypotheses*, which are always labeled as unverified.
+- **Lifecycle** new → investigating → contained → resolved. An incident
+  cannot be resolved without a verdict, a written assessment and a
+  resolution summary; resolving closes its open alerts. Every significant
+  change is kept in an append-only history.
+- **Timeline** of each incident, showing why each event is there and which
+  rules cited it, optionally extended with correlated events.
+- **Incident report:** downloadable Markdown generated from the recorded
+  data, with untrusted text escaped.
 
 **Detection engine (Milestone 3)**
 
@@ -51,7 +72,7 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 - A labeled **detection-lab** dataset with positive cases and lookalikes
   for every rule. The engine produces exactly the 19 expected findings on
   it, and none on the 203-event baseline.
-- Read-only **Alerts** pages. Status changes and notes arrive in Milestone 4.
+- **Alerts** pages with the explanation of every alert.
 
 **Event pipeline (Milestone 2)**
 
@@ -162,9 +183,15 @@ no CORS configuration is needed in development.
    the Event Explorer.
 7. On **Detection Rules → AEGIS-AUTH-001**, change `threshold` and press
    **Run detections now** to see the effect of tuning.
-8. **System Health** shows the stored-event count. Stop the backend and press
-   **Refresh**: the page reports that the backend cannot be reached instead
-   of showing stale data.
+8. Open **Investigation**, pick alert #1, and read why each correlated event
+   is linked. Tick the related password-spraying alert and press **Create
+   incident**.
+9. In the incident: move it to *investigating*, mark the successful logon
+   (`syn-lab-008`) as evidence, add a hypothesis, record the final assessment,
+   then move to *contained* and *resolved*. **Preview** shows the report.
+10. **System Health** shows the stored-event count. Stop the backend and press
+    **Refresh**: the page reports that the backend cannot be reached instead
+    of showing stale data.
 
 To start from an empty database again, stop the backend, delete
 `backend/data/aegis.db` and run `alembic upgrade head`.
@@ -208,8 +235,10 @@ npm run build
 
 - **No authentication.** Anyone who can reach the API can use it. Run it on
   localhost only.
-- Alerts cannot yet be triaged (status changes, notes) and there are no
-  incidents or correlation (Milestone 4).
+- Notes, status changes and history record a free-text `author` label
+  (default `analyst`), not an authenticated user.
+- Correlation has no weighting: very common values (a domain controller, a
+  shared NAT address) create many weak links. Criteria can be switched off.
 - Detection re-evaluates all stored events on each run. That is simple and
   correct for tens of thousands of events, but would need an incremental
   design for large volumes.
