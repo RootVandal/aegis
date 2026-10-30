@@ -2,6 +2,8 @@
 
 **Detect. Investigate. Defend.**
 
+[![CI](https://github.com/RootVandal/aegis/actions/workflows/ci.yml/badge.svg)](https://github.com/RootVandal/aegis/actions/workflows/ci.yml)
+
 AEGIS is a defensive security platform for security event analysis,
 rule-based threat detection, incident investigation and detection
 engineering. It turns raw security events into explainable detections and
@@ -256,9 +258,9 @@ npm run build
 
 Backend tests run against real SQLite databases built by the real
 migrations. For this release, all of the above were run from a fresh clone
-on Windows 11 (Python 3.12, Node 26) and passed. The GitHub Actions
-workflow (`.github/workflows/ci.yml`) runs the same commands but has not yet
-run on GitHub.
+on Windows 11 (Python 3.12, Node 26) and passed. GitHub Actions
+(`.github/workflows/ci.yml`) runs the same commands on every push and pull
+request.
 
 ## Demo dataset and walkthrough
 
@@ -303,7 +305,7 @@ each step. A short version:
 - Scenario Lab grades conclusions and cited evidence; written reasoning is
   stored but not graded.
 - No rate limiting; SQLite is not encrypted at rest.
-- Docker files and the CI workflow have not been run (see above).
+- The Docker files have not been built or run (see above).
 - Backend tests print a Starlette deprecation warning about `httpx`; it does
   not affect results.
 
