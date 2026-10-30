@@ -23,5 +23,5 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Scenario Lab', path: '/scenarios', status: 'available' },
   { label: 'Detection Testing', path: '/detection-testing', status: 'available' },
   { label: 'System Health', path: '/health', status: 'available' },
-  { label: 'Settings', path: '/settings', status: 'planned', milestone: 8 },
+  { label: 'Settings', path: '/settings', status: 'available' },
 ]

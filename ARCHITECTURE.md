@@ -1,7 +1,7 @@
 # AEGIS Architecture
 
-This document describes what exists **today** and the decisions behind it.
-Sections for later milestones are added when those features are built.
+This document describes AEGIS 1.0 and the decisions behind it. Sections
+are ordered by the milestone that introduced each part.
 
 ## Overview
 
@@ -35,9 +35,11 @@ reason about.
 ### Layering rule
 
 `routes → services → models`. Routes translate HTTP to Python calls and back;
-services contain logic and know nothing about FastAPI. The detection engine
-(Milestone 3) will be a pure-Python package on the same rule, so it can be
-tested by passing it events directly and never through HTTP or the UI.
+services contain logic and know nothing about FastAPI. The analytical
+packages (`ingestion` parsing and normalization, `detection`,
+`investigation`, `scenarios`, `evaluation`) go further: they are pure Python
+with no database, clock or randomness, so they are tested by passing data in
+directly and never through HTTP or the UI.
 
 ## Backend
 
@@ -64,6 +66,19 @@ All errors use one envelope:
 Validation errors report the location and reason but do not echo the
 submitted input. Unhandled exceptions are logged with a traceback on the
 server, and the client receives only `internal_error`.
+
+### Request hardening (Milestone 8)
+
+- `core/limits.py` is an ASGI middleware that caps request bodies at 1 MiB
+  (ingestion keeps its own 5 MiB limit). It counts bytes as they arrive, so
+  chunked uploads and false `Content-Length` headers are covered. When the
+  limit is crossed it sends the 413 envelope itself and reports a
+  disconnect to the app: raising inside `receive` would not work, because
+  FastAPI turns any error while reading a body into a generic 400.
+- An HTTP middleware adds security headers to every response and a
+  `default-src 'none'` CSP to `/api` responses.
+- `GET /api/v1/settings` exposes the effective configuration read-only. The
+  database is reported as backend plus file name, never the full URL.
 
 ### Data model (Milestone 1)
 
@@ -362,8 +377,12 @@ table in sync with that snapshot.
 ## Frontend
 
 - **Routing.** React Router. `src/navigation.ts` is the single list of pages.
-  Pages that are not built yet render as disabled sidebar items with their
-  milestone. They are never links to empty screens.
+  It can mark a page as planned, which renders a disabled sidebar item
+  instead of a link to an empty screen; in 1.0 every page is available.
+- **Code splitting and failures.** Every page is a `React.lazy` chunk, so
+  Recharts loads only with the pages that draw charts. Each route renders
+  inside an error boundary keyed by path: a page that crashes shows an error
+  message while the layout and navigation keep working.
 - **API access.** `src/api/client.ts` turns every failure into an `ApiError`.
   "Backend unreachable" (network failure, or a proxy answering 502/503/504
   without the AEGIS error envelope) is kept distinct from "backend returned
@@ -387,7 +406,21 @@ table in sync with that snapshot.
 | API | pytest + `TestClient` (HTTPX) | health states, error envelope, CORS, security headers, ingestion limits, filters, search escaping |
 | Detection rules | pytest on `EventRecord`s | positive, negative and edge cases per rule; thresholds and windows; parameter validation; labeled dataset gives exactly the expected findings; baseline gives none; order independence; documentation completeness; generated catalog is up to date |
 | Investigation | pytest | alert/incident transitions and required reasons/assessment; correlation criteria, window bounds and "time alone never correlates"; timeline sources; report escaping; an end-to-end acceptance test from alert to resolved incident |
-| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content; rule configuration and alert explanations; alert triage, investigation workspace and incident workflow, against a path-routing `fetch` mock |
+| Security | pytest + `TestClient` | body limits (declared and streamed), CSP scope, CORS preflight for every method, settings never exposing the database path |
+| Frontend | Vitest + React Testing Library | API client error mapping; Event Explorer filters, pagination, empty states, import flow and escaping of hostile content; rule configuration and alert explanations; alert triage, investigation workspace and incident workflow; dashboard ranges and empty states; Scenario Lab drafts and grading display; evaluation runs and comparison; Settings and the error boundary; all against a path-routing `fetch` mock |
 
 Backend tests run against real SQLite files created from the real migrations,
 not mocks, so they exercise the same SQL the app runs.
+
+Frontend tests render the real routed `App` against a `fetch` mock. The
+test setup imports every lazy page module before the tests in a file run,
+so the time to transform a page (slow on a loaded machine) is not counted
+against the wait for page content.
+
+## Deployment
+
+`docker-compose.yml` runs two containers: the backend (migrations, then
+Uvicorn, as an unprivileged user, SQLite on a named volume) and nginx
+serving the built frontend and proxying `/api`, so the browser uses a single
+origin and needs no CORS. The port is published on `127.0.0.1` only. These
+files have **not** been built or run; see the README.

@@ -35,19 +35,17 @@ describe('navigation', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument()
   })
 
-  it('renders planned pages as disabled items, not links', async () => {
+  it('links every primary page in the navigation', async () => {
     fetchMock.mockResolvedValue(jsonResponse(healthResponse()))
     renderApp()
     const nav = screen.getByRole('navigation', { name: 'Primary' })
 
-    expect(within(nav).getByRole('link', { name: 'System Health' })).toHaveAttribute('href', '/health')
-    expect(within(nav).getByRole('link', { name: 'Event Explorer' })).toHaveAttribute('href', '/events')
-    expect(within(nav).getByRole('link', { name: 'Alerts' })).toHaveAttribute('href', '/alerts')
-    expect(within(nav).queryByRole('link', { name: /Settings/ })).not.toBeInTheDocument()
-    expect(within(nav).getByText('Settings').closest('[aria-disabled]')).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    )
+    const links = within(nav).getAllByRole('link').map((link) => link.getAttribute('href'))
+    expect(links).toEqual([
+      '/overview', '/events', '/rules', '/alerts', '/incidents', '/investigation',
+      '/scenarios', '/detection-testing', '/health', '/settings',
+    ])  // prettier-ignore
+    expect(nav.querySelector('[aria-disabled]')).toBeNull()
     await within(screen.getByRole('banner')).findByText('Operational')
   })
 })
@@ -58,7 +56,7 @@ describe('System Health page', () => {
     renderApp()
 
     expect(await within(screen.getByRole('banner')).findByText('Operational')).toBeInTheDocument()
-    expect(screen.getByText('Connected; schema is up to date.')).toBeInTheDocument()
+    expect(await screen.findByText('Connected; schema is up to date.')).toBeInTheDocument()
     expect(screen.getByText(/v0\.1\.0 · test · server time 2026-10-30 12:00:00 UTC/)).toBeInTheDocument()
     expect(screen.getByText(/No events have been ingested yet/)).toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/health', expect.anything())

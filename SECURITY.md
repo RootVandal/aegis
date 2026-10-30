@@ -29,7 +29,13 @@ describes its security assumptions and current limitations.
 - Validation errors do not reflect submitted input back to the client.
 - An explicit CORS allow-list. Wildcard origins are rejected at startup.
 - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and
-  `Referrer-Policy: no-referrer` on API responses.
+  `Referrer-Policy: no-referrer` on API responses, plus
+  `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` on
+  `/api` responses (JSON never needs to load anything). The interactive
+  `/docs` page is excluded because Swagger UI loads from a CDN.
+- A request-body limit of 1 MiB on every endpoint except event ingestion,
+  counted on the stream so a missing or false `Content-Length` cannot
+  bypass it. Oversized requests get `413 payload_too_large`.
 - Configuration comes only from environment variables, with no secrets in the
   repository (`.env` files are git-ignored; see `.env.example`).
 - A frontend lint rule forbids `dangerouslySetInnerHTML`. Event content,
@@ -58,10 +64,20 @@ describes its security assumptions and current limitations.
   status changes and history is a client-supplied label, not a verified
   identity, so the audit trail is not trustworthy against a malicious user.
 - No rate limiting.
-- Request-size limits apply to the ingestion endpoint only. Other endpoints
-  accept small JSON bodies and have no explicit cap yet.
-- No Content-Security-Policy yet.
+- In local development the Vite dev server serves the frontend without a
+  CSP (its hot-reload client needs inline scripts). The Docker setup's nginx
+  configuration sets a strict CSP for the built app, but that setup has not
+  been run (see the README).
 - SQLite is a single local file with no encryption at rest.
+- Dependencies are pinned and `npm ci` reported no known vulnerabilities at
+  release time, but there is no automated dependency scanning.
+
+## Deployment notes
+
+The Docker Compose setup publishes the app on `127.0.0.1:8080` only and runs
+the backend as an unprivileged user. Do not change the port binding to
+`0.0.0.0` or put AEGIS behind a public reverse proxy: without authentication,
+anyone who can reach it can read and change all data.
 
 ## Reporting a vulnerability
 

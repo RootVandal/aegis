@@ -2,6 +2,7 @@ import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 
 import { NAV_ITEMS } from '../../navigation'
+import { ErrorBoundary } from '../ErrorBoundary'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 
@@ -36,9 +37,12 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar title={title} onOpenMenu={() => setMenuOpen(true)} />
         <main className="flex-1 overflow-y-auto">
-          <Suspense fallback={<p className="p-6 text-[13px] text-ink-muted">Loading page…</p>}>
-            <Outlet />
-          </Suspense>
+          {/* key: a crashed page recovers when the user navigates elsewhere. */}
+          <ErrorBoundary key={pathname}>
+            <Suspense fallback={<p className="p-6 text-[13px] text-ink-muted">Loading page…</p>}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

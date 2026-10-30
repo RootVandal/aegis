@@ -42,7 +42,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </ul>
 
       <p className="border-t border-line px-4 py-3 text-[11px] leading-relaxed text-ink-faint">
-        Items marked <span className="font-mono">M#</span> are planned and not yet implemented.
+        Synthetic data is labeled everywhere. Local use only: no authentication.
       </p>
     </nav>
   )

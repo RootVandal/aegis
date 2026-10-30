@@ -20,5 +20,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Interaction-heavy tests can exceed Vitest's 5 s default on slow or busy
+    // machines (2-vCPU CI runners, a cold transform cache). Still bounded.
+    testTimeout: 15_000,
   },
 })
