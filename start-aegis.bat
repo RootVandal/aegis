@@ -49,7 +49,7 @@ start "AEGIS frontend (close to stop)" /d "%ROOT%frontend" cmd /k "npm run dev"
 echo Waiting for AEGIS to start...
 for /l %%i in (1,1,60) do (
     curl -s -o nul http://127.0.0.1:8000/api/v1/health/live && curl -s -o nul http://localhost:5173 && goto :ready
-    "%SystemRoot%System32	imeout.exe" /t 1 /nobreak >nul
+    "%SystemRoot%\System32\timeout.exe" /t 1 /nobreak >nul
 )
 echo AEGIS did not start within 60 seconds. Check the backend and frontend windows.
 goto :fail
