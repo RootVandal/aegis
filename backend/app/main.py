@@ -20,6 +20,7 @@ from app.api.routes import (
     alerts,
     dashboard,
     detection,
+    evaluation,
     events,
     health,
     incidents,
@@ -85,6 +86,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(incidents.router)
     api.include_router(dashboard.router)
     api.include_router(scenarios.router)
+    api.include_router(evaluation.router)
     app.include_router(api)
 
     return app

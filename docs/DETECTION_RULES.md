@@ -266,7 +266,7 @@ A process was started by a parent that should not normally launch it, or a Windo
 
 A scheduled task, service or autostart registry value was created, which lets a program start again automatically.
 
-**Version** 1 · **Default severity** medium ·
+**Version** 2 · **Default severity** medium ·
 **Event types** `scheduled_task_created`, `service_installed`, `registry_modification`, `process_creation`
 
 **Required fields:** `event_type or windows_event_id (4698, 7045, 4697)`, `normalized_fields.extra.registry_key or TargetObject (registry path)`, `process_command_line (command-line path)`
@@ -275,7 +275,7 @@ A scheduled task, service or autostart registry value was created, which lets a 
 
 1. Scheduled task: event_type scheduled_task_created or Windows event 4698.
 2. Service: event_type service_installed or Windows event 7045 / 4697.
-3. Autostart: event_type registry_modification whose key (registry_key / TargetObject) is a Run, RunOnce, RunServices or Winlogon Userinit/Shell key.
+3. Autostart: event_type registry_modification whose key (registry_key / TargetObject) is a Run, RunOnce, RunServices or Winlogon Userinit/Shell key, unless the recorded operation (operation / EventType) is a deletion.
 4. If include_command_line: process command lines that run schtasks /create, Register-ScheduledTask, sc create, New-Service, or reg add ...\Run.
 5. Tasks or services whose name is in allowed_names are skipped.
 
@@ -308,7 +308,7 @@ A scheduled task, service or autostart registry value was created, which lets a 
 
 ### Known limitations
 
-- Detects creation events only; deletions and modifications are not evaluated.
+- Detects creation events only. Registry deletions are skipped when the event records its operation; a registry event without an operation field is treated as a creation.
 - Registry detection depends on registry auditing (e.g. Sysmon) being enabled.
 - allowed_names matches exact names; renamed malicious tasks are not caught by name alone.
 
@@ -320,6 +320,7 @@ A scheduled task, service or autostart registry value was created, which lets a 
 ### Change history
 
 - v1 (2026-10-30): Initial version.
+- v2 (2026-10-31): Ignore registry events whose operation is a deletion (DeleteValue / DeleteKey). Found by the evaluation suite (case pers-run-key-removed): removing an autostart entry was reported as persistence.
 
 ## AEGIS-NET-001: Suspicious Outbound Connections
 

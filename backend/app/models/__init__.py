@@ -1,6 +1,7 @@
 """ORM models. Importing this package registers every table on ``Base.metadata``."""
 
 from app.models.detection import Alert, DetectionRun, RuleSetting, alert_events
+from app.models.evaluation import EvaluationRun
 from app.models.event import Event, IngestionBatch
 from app.models.investigation import (
     AlertNote,
@@ -17,6 +18,7 @@ __all__ = [
     "AlertNote",
     "AlertStatusChange",
     "DetectionRun",
+    "EvaluationRun",
     "Event",
     "Incident",
     "IncidentEvidence",

@@ -11,6 +11,8 @@ from app.detection.rule import Rule, RuleChange, RuleParams
 from app.detection.rules.indicators import Indicator, indicator, matches
 from app.models.enums import Severity
 
+# Registry operations that remove rather than create (Sysmon EventType values included).
+DELETE_OPERATIONS = frozenset({"deletevalue", "deletekey", "delete"})
 TASK_EVENT_IDS = frozenset({4698})  # A scheduled task was created
 SERVICE_EVENT_IDS = frozenset({7045, 4697})  # A service was installed
 RUN_KEY = re.compile(
@@ -66,7 +68,7 @@ class PersistenceParams(RuleParams):
 class PersistenceMechanismChanges(Rule[PersistenceParams]):
     id = "AEGIS-PERS-001"
     name = "Persistence Mechanism Changes"
-    version = 1
+    version = 2
     description = (
         "A scheduled task, service or autostart registry value was created, which lets a "
         "program start again automatically."
@@ -87,7 +89,8 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
         "Scheduled task: event_type scheduled_task_created or Windows event 4698.",
         "Service: event_type service_installed or Windows event 7045 / 4697.",
         "Autostart: event_type registry_modification whose key (registry_key / "
-        "TargetObject) is a Run, RunOnce, RunServices or Winlogon Userinit/Shell key.",
+        "TargetObject) is a Run, RunOnce, RunServices or Winlogon Userinit/Shell key, "
+        "unless the recorded operation (operation / EventType) is a deletion.",
         "If include_command_line: process command lines that run schtasks /create, "
         "Register-ScheduledTask, sc create, New-Service, or reg add ...\\Run.",
         "Tasks or services whose name is in allowed_names are skipped.",
@@ -126,7 +129,9 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
         "IT automation and backup agents.",
     )
     limitations = (
-        "Detects creation events only; deletions and modifications are not evaluated.",
+        "Detects creation events only. Registry deletions are skipped when the event "
+        "records its operation; a registry event without an operation field is treated "
+        "as a creation.",
         "Registry detection depends on registry auditing (e.g. Sysmon) being enabled.",
         "allowed_names matches exact names; renamed malicious tasks are not caught by name alone.",
     )
@@ -134,7 +139,16 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
         "Whether the new task, service or value has executed yet.",
         "Whether the change was part of an approved software installation.",
     )
-    changelog = (RuleChange(1, "2026-10-30", "Initial version."),)
+    changelog = (
+        RuleChange(1, "2026-10-30", "Initial version."),
+        RuleChange(
+            2,
+            "2026-10-31",
+            "Ignore registry events whose operation is a deletion (DeleteValue / DeleteKey). "
+            "Found by the evaluation suite (case pers-run-key-removed): removing an autostart "
+            "entry was reported as persistence.",
+        ),
+    )
     params_model = PersistenceParams
 
     def evaluate(self, events: Sequence[EventRecord], params: PersistenceParams) -> list[Finding]:
@@ -183,6 +197,9 @@ class PersistenceMechanismChanges(Rule[PersistenceParams]):
             )
         if event.event_type == "registry_modification":
             key = event.extra_text("registry_key", "TargetObject")
+            operation = (event.extra_text("operation", "EventType") or "").lower()
+            if operation in DELETE_OPERATIONS:
+                return None  # removing an autostart entry is not persistence
             if key and RUN_KEY.search(key):
                 return (
                     "New autostart registry value",

@@ -270,6 +270,17 @@ def test_non_persistence_activity_is_ignored(event: object) -> None:
     assert run(PERS, [event]) == []  # type: ignore[list-item]
 
 
+@pytest.mark.parametrize("operation", ["DeleteValue", "DeleteKey"])
+def test_removing_a_run_key_is_not_persistence(operation: str) -> None:
+    # Regression (rule v2): found by the evaluation suite, case pers-run-key-removed.
+    key = "HKCU\Software\Microsoft\Windows\CurrentVersion\Run\OldTool"
+    deleted = rec("registry_modification", extra={"registry_key": key, "operation": operation})
+    created = rec("registry_modification", extra={"registry_key": key, "EventType": "SetValue"})
+
+    assert run(PERS, [deleted]) == []
+    assert len(run(PERS, [created])) == 1
+
+
 def test_allowed_names_suppress_known_good_services() -> None:
     event = rec("service_installed", extra={"service_name": "CorpBackupAgent"})
 
