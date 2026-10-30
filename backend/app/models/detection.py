@@ -1,7 +1,7 @@
 """Detection results: alerts, the runs that produced them, and rule settings."""
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import JSON, Boolean, Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -9,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, UTCDateTime, enum_column, utc_now
 from app.models.enums import AlertStatus, DetectionTrigger, Severity
 from app.models.event import Event
+
+if TYPE_CHECKING:
+    from app.models.investigation import AlertNote, AlertStatusChange, Incident
 
 # Links an alert to the events that caused it.
 # * Deleting an alert removes only these link rows (CASCADE).
@@ -88,6 +91,18 @@ class Alert(Base):
     detection_run_id: Mapped[int | None] = mapped_column(
         ForeignKey("detection_runs.id", ondelete="SET NULL"), index=True
     )
+    # An alert belongs to at most one incident.
+    incident_id: Mapped[int | None] = mapped_column(
+        ForeignKey("incidents.id", ondelete="SET NULL"), index=True
+    )
+    incident: Mapped["Incident | None"] = relationship(back_populates="alerts")
+    notes: Mapped[list["AlertNote"]] = relationship(
+        cascade="all, delete-orphan", order_by="AlertNote.id"
+    )
+    status_changes: Mapped[list["AlertStatusChange"]] = relationship(
+        cascade="all, delete-orphan", order_by="AlertStatusChange.id"
+    )
+
     detection_run: Mapped[DetectionRun | None] = relationship()
     events: Mapped[list[Event]] = relationship(
         secondary=alert_events, order_by=(Event.timestamp, Event.id)

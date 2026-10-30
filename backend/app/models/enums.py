@@ -35,3 +35,24 @@ class AlertStatus(StrEnum):
 class DetectionTrigger(StrEnum):
     MANUAL = "manual"  # started by a user from the UI or API
     INGESTION = "ingestion"  # started automatically after new events were stored
+
+
+class IncidentStatus(StrEnum):
+    """Basic lifecycle: new -> investigating -> contained -> resolved."""
+
+    NEW = "new"
+    INVESTIGATING = "investigating"
+    CONTAINED = "contained"
+    RESOLVED = "resolved"
+
+
+class NoteKind(StrEnum):
+    NOTE = "note"  # an observation or action taken
+    HYPOTHESIS = "hypothesis"  # an unverified explanation; always labeled as such
+
+
+class AssessmentVerdict(StrEnum):
+    TRUE_POSITIVE = "true_positive"  # malicious or unauthorized activity confirmed
+    BENIGN_ACTIVITY = "benign_activity"  # the activity happened but was authorized/expected
+    FALSE_POSITIVE = "false_positive"  # the detection was wrong about what happened
+    INCONCLUSIVE = "inconclusive"  # the evidence does not support a conclusion

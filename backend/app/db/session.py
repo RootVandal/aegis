@@ -10,7 +10,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 
-def build_engine(database_url: str) -> Engine:
+def build_engine(database_url: str, *, enforce_foreign_keys: bool = True) -> Engine:
     url = make_url(database_url)
     connect_args: dict[str, Any] = {}
 
@@ -24,7 +24,7 @@ def build_engine(database_url: str) -> Engine:
 
     engine = create_engine(url, connect_args=connect_args)
 
-    if url.get_backend_name() == "sqlite":
+    if url.get_backend_name() == "sqlite" and enforce_foreign_keys:
 
         @event.listens_for(engine, "connect")
         def _enable_foreign_keys(dbapi_connection: Any, _record: Any) -> None:

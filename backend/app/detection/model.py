@@ -30,6 +30,7 @@ class EventRecord:
     process_command_line: str | None = None
     windows_event_id: int | None = None
     process_path: str | None = None
+    scenario_id: str | None = None
     extra: dict[str, Any] = field(default_factory=dict, hash=False, compare=False)
 
     def extra_text(self, *keys: str) -> str | None:

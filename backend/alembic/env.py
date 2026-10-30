@@ -39,7 +39,11 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    engine = build_engine(_database_url())
+    # Foreign keys are NOT enforced while migrating. SQLite batch mode rebuilds
+    # a table (copy, DROP, rename); with enforcement on, DROP TABLE would fire
+    # ON DELETE CASCADE and silently delete rows in child tables (for example
+    # every alert_events link). Integrity is verified explicitly afterwards.
+    engine = build_engine(_database_url(), enforce_foreign_keys=False)
     with engine.connect() as connection:
         context.configure(
             connection=connection,
@@ -50,6 +54,10 @@ def run_migrations_online() -> None:
         )
         with context.begin_transaction():
             context.run_migrations()
+        if connection.dialect.name == "sqlite":
+            problems = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+            if problems:
+                raise RuntimeError(f"Foreign key violations after migration: {problems[:10]}")
     engine.dispose()
 
 

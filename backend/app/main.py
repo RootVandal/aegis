@@ -16,7 +16,7 @@ from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.routes import detection, events, health, ingestion
+from app.api.routes import alerts, detection, events, health, incidents, ingestion
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.db.session import build_engine, build_session_factory
@@ -72,6 +72,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(events.router)
     api.include_router(ingestion.router)
     api.include_router(detection.router)
+    api.include_router(alerts.router)
+    api.include_router(incidents.router)
     app.include_router(api)
 
     return app

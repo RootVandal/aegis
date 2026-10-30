@@ -45,6 +45,7 @@ def to_record(event: Event) -> EventRecord:
         process_command_line=event.process_command_line,
         windows_event_id=event.windows_event_id,
         process_path=fields.get("process_path"),
+        scenario_id=event.scenario_id,
         extra=extra if isinstance(extra, dict) else {},
     )
 

@@ -2,5 +2,26 @@
 
 from app.models.detection import Alert, DetectionRun, RuleSetting, alert_events
 from app.models.event import Event, IngestionBatch
+from app.models.investigation import (
+    AlertNote,
+    AlertStatusChange,
+    Incident,
+    IncidentEvidence,
+    IncidentHistory,
+    IncidentNote,
+)
 
-__all__ = ["Alert", "DetectionRun", "Event", "IngestionBatch", "RuleSetting", "alert_events"]
+__all__ = [
+    "Alert",
+    "AlertNote",
+    "AlertStatusChange",
+    "DetectionRun",
+    "Event",
+    "Incident",
+    "IncidentEvidence",
+    "IncidentHistory",
+    "IncidentNote",
+    "IngestionBatch",
+    "RuleSetting",
+    "alert_events",
+]

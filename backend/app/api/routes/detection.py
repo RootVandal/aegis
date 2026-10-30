@@ -1,25 +1,21 @@
-"""Detection rules, detection runs and (read-only, for now) alerts."""
+"""Detection rules and detection runs."""
 
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import ValidationError
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.db.base import utc_now
 from app.db.session import get_db
 from app.detection.mitre import ATTACK_VERSION
-from app.detection.registry import RULES, RULES_BY_ID
+from app.detection.registry import RULES
 from app.detection.rule import Rule
 from app.models import Alert, DetectionRun, RuleSetting
 from app.models.enums import DetectionTrigger
 from app.schemas.detection import (
-    AlertDetail,
-    AlertFilters,
-    AlertPage,
-    AlertSummary,
     DetectionRunOut,
     MitreDetail,
     MitreSummary,
@@ -28,7 +24,6 @@ from app.schemas.detection import (
     RuleSummary,
     RuleUpdate,
 )
-from app.schemas.events import EventSummary
 from app.services.detection import get_rule, rule_settings, run_detection
 
 router = APIRouter()
@@ -165,64 +160,3 @@ def list_runs(
 ) -> list[DetectionRunOut]:
     runs = db.scalars(select(DetectionRun).order_by(DetectionRun.id.desc()).limit(limit))
     return [DetectionRunOut.model_validate(run) for run in runs]
-
-
-def _alert_summary(alert: Alert) -> AlertSummary:
-    rule = RULES_BY_ID.get(alert.rule_id)
-    return AlertSummary(
-        id=alert.id,
-        rule_id=alert.rule_id,
-        rule_name=rule.name if rule else alert.explanation.get("rule", {}).get("name", ""),
-        rule_version=alert.rule_version,
-        title=alert.title,
-        severity=alert.severity,
-        status=alert.status,
-        created_at=alert.created_at,
-        first_seen=alert.first_seen,
-        last_seen=alert.last_seen,
-        event_count=int(alert.explanation.get("evidence", {}).get("event_count", 0)),
-        hosts=alert.hosts,
-        users=alert.users,
-        ips=alert.ips,
-    )
-
-
-@router.get("/alerts", response_model=AlertPage, tags=["alerts"], summary="List alerts")
-def list_alerts(
-    filters: Annotated[AlertFilters, Query()], db: Annotated[Session, Depends(get_db)]
-) -> AlertPage:
-    conditions: list[ColumnElement[bool]] = []
-    if filters.status:
-        conditions.append(Alert.status.in_(filters.status))
-    if filters.severity:
-        conditions.append(Alert.severity.in_(filters.severity))
-    if filters.rule_id:
-        conditions.append(Alert.rule_id == filters.rule_id)
-    total = db.scalar(select(func.count()).select_from(Alert).where(*conditions)) or 0
-    alerts = db.scalars(
-        select(Alert)
-        .where(*conditions)
-        .order_by(Alert.last_seen.desc(), Alert.id.desc())
-        .offset((filters.page - 1) * filters.page_size)
-        .limit(filters.page_size)
-    )
-    return AlertPage(
-        items=[_alert_summary(a) for a in alerts],
-        total=total,
-        page=filters.page,
-        page_size=filters.page_size,
-    )
-
-
-@router.get("/alerts/{alert_id}", response_model=AlertDetail, tags=["alerts"], summary="Alert")
-def alert_detail(alert_id: int, db: Annotated[Session, Depends(get_db)]) -> AlertDetail:
-    alert = db.get(Alert, alert_id)
-    if alert is None:
-        raise AppError(404, "alert_not_found", f"No alert with ID {alert_id}.")
-    return AlertDetail(
-        **_alert_summary(alert).model_dump(),
-        explanation=alert.explanation,
-        rule_params=alert.rule_params,
-        detection_run_id=alert.detection_run_id,
-        events=[EventSummary.model_validate(event) for event in alert.events],
-    )

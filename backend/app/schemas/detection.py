@@ -1,7 +1,7 @@
 """Request and response models for rules, detection runs and alerts."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -87,6 +87,8 @@ class AlertFilters(BaseModel):
     status: list[AlertStatus] = Field(default_factory=list)
     severity: list[Severity] = Field(default_factory=list)
     rule_id: str | None = Field(default=None, max_length=64)
+    q: str | None = Field(default=None, max_length=200, description="Search in alert titles.")
+    sort: Literal["last_seen_desc", "created_desc", "severity_desc"] = "last_seen_desc"
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, ge=1, le=200)
 
@@ -106,6 +108,7 @@ class AlertSummary(BaseModel):
     hosts: list[str]
     users: list[str]
     ips: list[str]
+    incident_id: int | None
 
 
 class AlertDetail(AlertSummary):
