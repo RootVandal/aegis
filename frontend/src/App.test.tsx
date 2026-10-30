@@ -43,8 +43,8 @@ describe('navigation', () => {
     expect(within(nav).getByRole('link', { name: 'System Health' })).toHaveAttribute('href', '/health')
     expect(within(nav).getByRole('link', { name: 'Event Explorer' })).toHaveAttribute('href', '/events')
     expect(within(nav).getByRole('link', { name: 'Alerts' })).toHaveAttribute('href', '/alerts')
-    expect(within(nav).queryByRole('link', { name: /Detection Testing/ })).not.toBeInTheDocument()
-    expect(within(nav).getByText('Detection Testing').closest('[aria-disabled]')).toHaveAttribute(
+    expect(within(nav).queryByRole('link', { name: /Settings/ })).not.toBeInTheDocument()
+    expect(within(nav).getByText('Settings').closest('[aria-disabled]')).toHaveAttribute(
       'aria-disabled',
       'true',
     )

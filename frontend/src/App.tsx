@@ -7,6 +7,7 @@ import { AppLayout } from './components/layout/AppLayout'
 // by the pages that draw charts.
 const AlertDetailPage = lazy(() => import('./pages/alerts/AlertDetailPage').then((m) => ({ default: m.AlertDetailPage })))
 const AlertsPage = lazy(() => import('./pages/alerts/AlertsPage').then((m) => ({ default: m.AlertsPage })))
+const DetectionTestingPage = lazy(() => import('./pages/testing/DetectionTestingPage').then((m) => ({ default: m.DetectionTestingPage })))
 const EventDetailPage = lazy(() => import('./pages/events/EventDetailPage').then((m) => ({ default: m.EventDetailPage })))
 const EventExplorerPage = lazy(() => import('./pages/events/EventExplorerPage').then((m) => ({ default: m.EventExplorerPage })))
 const ImportPage = lazy(() => import('./pages/events/ImportPage').then((m) => ({ default: m.ImportPage })))
@@ -39,6 +40,7 @@ export function App() {
         <Route path="/investigation" element={<InvestigationPage />} />
         <Route path="/scenarios" element={<ScenarioLabPage />} />
         <Route path="/scenarios/:scenarioId" element={<ScenarioPage />} />
+        <Route path="/detection-testing" element={<DetectionTestingPage />} />
         <Route path="/health" element={<SystemHealthPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

@@ -24,10 +24,29 @@ shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, �
 | 4 | Alert and incident workflows, correlation, timelines | **Done** |
 | 5 | Overview dashboard and remaining UI | **Done** |
 | 6 | Scenario Lab (4 training scenarios) | **Done** |
-| 7 | Detection evaluation lab (precision / recall on labeled data) | Planned |
+| 7 | Detection evaluation lab (precision / recall on labeled data) | **Done** |
 | 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
 
-### What works today (Milestones 1–6)
+### What works today (Milestones 1–7)
+
+**Detection evaluation (Milestone 7)**
+
+- A labeled suite of 51 small test cases: positives, benign activity,
+  lookalikes, edge cases, incomplete telemetry, known detection gaps and
+  malformed records. Labels state whether the behavior is really present,
+  not what the rules do, so the suite includes cases where the rules fail.
+- **Detection Testing** runs every rule on every case through the real
+  normalizer and engine, and reports TP/FP/FN/TN, precision, recall and F1
+  per rule and overall. Undefined metrics are shown as "n/a", never as a
+  number. Misclassified cases are listed with their records.
+- Runs are stored with the suite version and rule versions/parameters, so
+  they are reproducible. Each run is compared with the previous one, which
+  shows the effect of tuning.
+- Current result with default parameters: precision 71.4%, recall 64.5%,
+  F1 67.8% on synthetic data. Method, per-rule results and limitations are
+  in [docs/DETECTION_EVALUATION.md](docs/DETECTION_EVALUATION.md).
+- The suite found a real bug: AEGIS-PERS-001 reported deleted Run keys as
+  persistence. It is fixed in rule version 2, with a regression test.
 
 **Scenario Lab (Milestone 6)**
 
@@ -233,7 +252,10 @@ no CORS configuration is needed in development.
     investigation**. Use the linked Event Explorer view and the alerts, cite
     the events you rely on, answer the questions, and submit. The assessment
     lists which objectives were met and explains every answer.
-11. **System Health** shows the stored-event count. Stop the backend and press
+11. Open **Detection Testing → Run evaluation**. Change a threshold on a
+    rule page (for example AEGIS-AUTH-001 `threshold` = 9), run it again, and
+    read the comparison: the stricter threshold misses every positive case.
+12. **System Health** shows the stored-event count. Stop the backend and press
     **Refresh**: the page reports that the backend cannot be reached instead
     of showing stale data.
 
@@ -286,8 +308,10 @@ npm run build
 - Detection re-evaluates all stored events on each run. That is simple and
   correct for tens of thousands of events, but would need an incremental
   design for large volumes.
-- The rules are tuned for the synthetic datasets. Good results on synthetic
-  data do not show how they would perform on real telemetry.
+- The rules were written together with the synthetic datasets and the
+  evaluation suite. Good results on synthetic data do not show how they
+  would perform on real telemetry; see the limitations in
+  [docs/DETECTION_EVALUATION.md](docs/DETECTION_EVALUATION.md).
 - Event import accepts JSON / JSON Lines only. There is no native `.evtx`,
   syslog or CEF parsing.
 - Text search uses SQL `LIKE` over selected columns. It is fine for tens of

@@ -343,6 +343,22 @@ revealing (no grade). A new attempt can always be started. The UI keeps the
 in-progress draft in `localStorage` so it survives navigating to the
 investigation tools; this is a per-browser convenience, not stored state.
 
+## Detection evaluation (Milestone 7)
+
+| Module | Responsibility |
+| --- | --- |
+| `evaluation/suite.py` | The labeled cases and the suite's content hash (`dataset_version`). |
+| `evaluation/runner.py` | Normalizes each case's records, runs every rule on each case in isolation, maps results to TP/FP/FN/TN. Pure. |
+| `evaluation/metrics.py` | Precision, recall, F1 with `None` for undefined values; micro and macro totals. |
+| `api/routes/evaluation.py` | Runs, stores (`evaluation_runs`) and compares with the previous run. |
+
+Design choices, explained in [docs/DETECTION_EVALUATION.md](docs/DETECTION_EVALUATION.md):
+cases are isolated so outcomes are independent; labels describe reality,
+not rule behavior; undefined metrics are never shown as numbers; every rule
+is evaluated, including disabled ones. A regression snapshot in the tests
+pins each rule's counts, and a second test keeps the published results
+table in sync with that snapshot.
+
 ## Frontend
 
 - **Routing.** React Router. `src/navigation.ts` is the single list of pages.

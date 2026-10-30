@@ -179,3 +179,21 @@ def test_errors(client: TestClient) -> None:
     assert client.post("/api/v1/evaluation/runs", json={"dataset_id": "x"}).status_code == 404
     assert client.post("/api/v1/evaluation/runs", json={"settings": "magic"}).status_code == 422
     assert client.get("/api/v1/evaluation/runs/99").json()["error"]["code"] == "run_not_found"
+
+
+def test_published_results_match_the_snapshot() -> None:
+    """docs/DETECTION_EVALUATION.md must not drift from what the rules really do."""
+    import re
+    from pathlib import Path
+
+    doc = (Path(__file__).resolve().parents[2] / "docs" / "DETECTION_EVALUATION.md").read_text(
+        encoding="utf-8"
+    )
+    published = {
+        rule_id: tuple(int(n) for n in counts)
+        for rule_id, *counts in re.findall(
+            r"^\| (AEGIS-[A-Z]+-\d+) v\d+ \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|", doc, re.MULTILINE
+        )
+    }
+
+    assert published == EXPECTED_COUNTS
