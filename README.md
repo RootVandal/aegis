@@ -2,182 +2,159 @@
 
 **Detect. Investigate. Defend.**
 
-AEGIS is a defensive security platform for security event analysis, rule-based
-threat detection, incident investigation and detection engineering. It turns
-raw security events into explainable detections and structured investigations,
-and lets analysts practise incident response on synthetic data in a safe lab.
+AEGIS is a defensive security platform for security event analysis,
+rule-based threat detection, incident investigation and detection
+engineering. It turns raw security events into explainable detections and
+structured investigations, and lets analysts practise incident response on
+synthetic data in a safe lab.
 
-AEGIS is a learning and portfolio project. It is **not** an enterprise SIEM, has
-no real-world validation, and is not hardened for exposure to the internet
-(see [SECURITY.md](SECURITY.md)).
+![Overview dashboard](docs/screenshots/overview.png)
 
-## Project status
+AEGIS is a learning and portfolio project. It is **not** an enterprise SIEM,
+it has no real-world validation, and it has no authentication, so it must
+run on localhost only (see [SECURITY.md](SECURITY.md)). All bundled data is
+synthetic and labeled as such everywhere in the UI.
 
-Development happens in milestones. Only features listed as done exist; the UI
-shows planned pages as disabled items tagged with their milestone (`M2`, `M3`, …).
+## Contents
 
-| Milestone | Scope | Status |
-| --- | --- | --- |
-| 1 | Working foundation: FastAPI, React, SQLite, migrations, health checks | **Done** |
-| 2 | Event pipeline: normalization, JSON/JSONL ingestion, search | **Done** |
-| 3 | Detection engine: 8 deterministic rules with explanations | **Done** |
-| 4 | Alert and incident workflows, correlation, timelines | **Done** |
-| 5 | Overview dashboard and remaining UI | **Done** |
-| 6 | Scenario Lab (4 training scenarios) | **Done** |
-| 7 | Detection evaluation lab (precision / recall on labeled data) | **Done** |
-| 8 | Portfolio release: security review, Docker, docs, screenshots | Planned |
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Technology stack](#technology-stack)
+- [Local development](#local-development)
+- [Docker](#docker)
+- [Tests and checks](#tests-and-checks)
+- [Demo dataset and walkthrough](#demo-dataset-and-walkthrough)
+- [Known limitations](#known-limitations)
+- [Roadmap](#roadmap)
+- [License](#license)
 
-### What works today (Milestones 1–7)
+## Features
 
-**Detection evaluation (Milestone 7)**
+**Event pipeline**
 
-- A labeled suite of 51 small test cases: positives, benign activity,
-  lookalikes, edge cases, incomplete telemetry, known detection gaps and
-  malformed records. Labels state whether the behavior is really present,
-  not what the rules do, so the suite includes cases where the rules fail.
-- **Detection Testing** runs every rule on every case through the real
-  normalizer and engine, and reports TP/FP/FN/TN, precision, recall and F1
-  per rule and overall. Undefined metrics are shown as "n/a", never as a
-  number. Misclassified cases are listed with their records.
-- Runs are stored with the suite version and rule versions/parameters, so
-  they are reproducible. Each run is compared with the previous one, which
-  shows the effect of tuning.
-- Current result with default parameters: precision 71.4%, recall 64.5%,
-  F1 67.8% on synthetic data. Method, per-rule results and limitations are
-  in [docs/DETECTION_EVALUATION.md](docs/DETECTION_EVALUATION.md).
-- The suite found a real bug: AEGIS-PERS-001 reported deleted Run keys as
-  persistence. It is fixed in rule version 2, with a regression test.
+- Import security events as JSON Lines or JSON, through the UI or
+  `POST /api/v1/ingestion/batches` ([format](docs/EVENT_FORMAT.md)).
+- Normalization into one schema: UTC timestamps, Sysmon and Windows Security
+  field aliases, canonical IP addresses, `DOMAIN\user` splitting. The
+  original record is always kept.
+- Per-record validation: a bad record is rejected with its line number and
+  reason and never blocks the good ones. Re-importing is safe
+  (de-duplication by stable event ID).
+- **Event Explorer** with time, type, severity, host, user, IP and origin
+  filters, text search, shareable filter URLs and a raw-vs-normalized view.
 
-**Scenario Lab (Milestone 6)**
+**Detection engine**
 
-- Four guided investigations on synthetic data, from beginner to advanced:
-  account takeover through password guessing; a malicious macro document
-  next to a benign finance macro; privilege escalation through a
-  misconfigured service next to an authorized change; and a multi-stage
-  intrusion (phishing → persistence → credential misuse → defense
-  impairment → command and control).
-- Each scenario has a briefing, objectives, questions, progressive hints,
-  the detection rules involved, the intended reasoning and a discussion of
-  false positives. The explanation stays hidden until you submit or choose
-  to reveal it. Answers are not part of any API response before that.
-- **Evidence-based grading.** You cite the events your conclusions rest on.
-  The grade checks that the conclusions are correct, that the key evidence
-  is cited, and that no benign lookalike is cited as evidence. Written
-  reasoning is stored and shown next to the model reasoning, but it is not
-  auto-graded (that would need a human or a language model). Time and
-  hints are recorded but never scored.
-- Scenario data goes through the normal ingestion and detection pipeline,
-  so you investigate with the real tools (Event Explorer, alerts,
-  Investigation). Drafts survive navigation.
-
-**Overview dashboard (Milestone 5)**
-
-- The landing page summarizes stored data, all computed from the database at
-  request time: open and new alerts, open incidents, events and alerts in the
-  selected range, events over time (split into synthetic and imported),
-  alerts by severity, most frequently triggered rules, and recent alerts,
-  incidents and ingestion activity.
-- Time ranges (all time, last 30 days, 7 days, 24 hours) are anchored to the
-  real current time. The page shows how old the newest event is and explains
-  when a range is empty, instead of shifting the window to fit the data.
-- "Now" metrics (open alerts, incidents) are kept apart from range-based ones.
-- With an empty database it offers the bundled synthetic datasets. Nothing
-  refreshes or animates by itself: no simulated live telemetry.
-- Every figure links to the list behind it, and the chart has a table view.
-- The event detail page lists the alerts that cite the event, so navigation
-  works in both directions.
-
-**Investigation workflow (Milestone 4)**
-
-- **Alert triage:** validated status transitions (new → acknowledged →
-  investigating → resolved / false positive), a required reason for closing
-  or reopening, notes, full status history, title search and severity sort.
-- **Explainable correlation:** the Investigation workspace shows events that
-  share a host, user, IP address or scenario with an alert's evidence inside
-  a chosen time window, with the reason for every link. Time proximity alone
-  never links events.
-- **Incidents:** create one from an alert (or several related alerts), link
-  and unlink alerts, record events as evidence with a reason, and keep notes
-  and *hypotheses*, which are always labeled as unverified.
-- **Lifecycle** new → investigating → contained → resolved. An incident
-  cannot be resolved without a verdict, a written assessment and a
-  resolution summary; resolving closes its open alerts. Every significant
-  change is kept in an append-only history.
-- **Timeline** of each incident, showing why each event is there and which
-  rules cited it, optionally extended with correlated events.
-- **Incident report:** downloadable Markdown generated from the recorded
-  data, with untrusted text escaped.
-
-**Detection engine (Milestone 3)**
-
-- Eight deterministic, explainable rules: failed logins, multi-account
-  authentication (password spraying), suspicious PowerShell, privilege
-  escalation indicators, suspicious process relationships, persistence
-  changes, suspicious outbound connections and security configuration
-  changes. The full catalog is in
-  [docs/DETECTION_RULES.md](docs/DETECTION_RULES.md), generated from the
-  rule code.
-- Each rule documents its logic, required fields, investigation steps,
-  false positives, limitations and version history. ATT&CK mappings were
-  verified against attack.mitre.org (v20.0).
-- Configurable thresholds and lists per rule, validated on save. Rules can
-  be enabled and disabled.
-- Detection runs automatically after every import (and on demand). Alerts
-  are de-duplicated, so re-running never creates the same alert twice.
+- Eight deterministic, explainable rules: failed logins, password spraying,
+  suspicious PowerShell, privilege escalation, suspicious process
+  relationships, persistence, suspicious outbound connections and security
+  configuration changes ([catalog](docs/DETECTION_RULES.md), generated from
+  the code).
+- Each rule documents its logic, required fields, false positives,
+  limitations, investigation steps and version history. ATT&CK mappings are
+  verified against ATT&CK v20.0 and state what they do *not* cover.
+- Tunable, validated parameters per rule; rules can be disabled. Detection
+  runs after each import and on demand, and never duplicates an alert.
 - Every alert carries a structured explanation built from its own evidence:
-  what was detected, which events, which conditions, what is unknown, next
-  steps and likely false positives. No language model is involved.
-- A labeled **detection-lab** dataset with positive cases and lookalikes
-  for every rule. The engine produces exactly the 19 expected findings on
-  it, and none on the 203-event baseline.
-- **Alerts** pages with the explanation of every alert.
+  what was detected, which events and conditions, what is known and unknown,
+  next steps and likely false positives. No language model is involved.
 
-**Event pipeline (Milestone 2)**
+**Investigation and incident response**
 
-- Import security events as **JSON Lines** or **JSON** through the UI or
-  `POST /api/v1/ingestion/batches`. The format is documented in
-  [docs/EVENT_FORMAT.md](docs/EVENT_FORMAT.md).
-- Normalization: UTC timestamps (ISO 8601 or epoch), field aliases from
-  Sysmon and Windows Security (`Image`, `UtcTime`, `Computer`...), canonical
-  IP addresses, `DOMAIN\user` splitting, lowercased host and process names.
-  The original record is always kept unchanged.
-- Per-record validation: bad records are rejected with their line number and
-  the reason, and never crash the import or block the good records.
-- De-duplication by stable event ID (taken from the source, or a SHA-256 of
-  the record), so re-importing a file is safe.
-- Request limits: 5 MiB body (enforced on the stream), 10,000 records,
-  64 KiB per record.
-- Event search: pagination; filters by time range, type, severity, host,
-  user, source IP and data origin; case-insensitive text search.
-- **Event Explorer** UI with shareable filter URLs, an event detail view that
-  shows normalized fields next to the original record, and an import page
-  with ingestion history.
-- A deterministic **synthetic baseline dataset** (203 events, three office
-  days, no attack activity) that loads with one click and is labelled
-  `synthetic` everywhere.
+- Alert triage with validated status transitions, required reasons for
+  closing or reopening, notes and full history.
+- **Explainable correlation:** events sharing a host, user, IP address or
+  scenario with an alert's evidence, each with the reason it is linked.
+  Time proximity alone never links events.
+- **Incidents** (new → investigating → contained → resolved) with linked
+  alerts, evidence, notes, hypotheses labeled as unverified, an
+  append-only history and a timeline. Resolving requires a verdict and a
+  written assessment.
+- Downloadable Markdown incident report with untrusted text escaped.
 
-**Foundation (Milestone 1)**
+**Overview dashboard**
 
-- FastAPI backend with an application factory, typed settings from environment
-  variables, explicit CORS allow-list and basic security headers.
-- SQLite database managed with Alembic migrations. Initial tables:
-  `events` (normalized security events) and `ingestion_batches`.
-- `GET /api/v1/health/live` (liveness) and `GET /api/v1/health` (database
-  connectivity, migration state and stored-data counts).
-- Consistent JSON error envelope; unexpected errors never expose stack traces.
-- React + TypeScript frontend with the AEGIS layout and a working
-  **System Health** page that reads the real health endpoint.
-- Automated tests for both halves, plus lint and static type checks.
+- Figures computed from the database at request time, ranges anchored to
+  the real current time, data freshness shown, "now" metrics kept apart from
+  range metrics. Every figure links to the list behind it; the chart has a
+  table view. No simulated live telemetry.
+
+**Scenario Lab**
+
+- Four guided investigations from beginner to advanced: account takeover,
+  a malicious macro next to a benign one, privilege escalation next to an
+  authorized change, and a multi-stage intrusion.
+- **Evidence-based grading:** conclusions must be right *and* backed by the
+  key events; citing a benign lookalike costs points. Answers never reach
+  the browser before the attempt is closed. Time and hints are not scored.
+
+**Detection evaluation**
+
+- A labeled suite of 51 cases (positives, benign, lookalikes, edge cases,
+  incomplete telemetry, known gaps, malformed input). Labels describe
+  reality, not what the rules do.
+- Per-rule TP/FP/FN/TN, precision, recall and F1 (undefined values shown as
+  "n/a"), misclassified cases, and comparison with the previous run to
+  measure tuning. Default parameters: precision 71.4%, recall 64.5%, F1
+  67.8%, on synthetic data ([method and limits](docs/DETECTION_EVALUATION.md)).
+- The suite found a real bug (deleted Run keys reported as persistence),
+  fixed in AEGIS-PERS-001 v2 with a regression test.
+
+**Operations**
+
+- System Health (database, schema revision, stored data) and a read-only
+  Settings page.
+- Request limits, a strict Content-Security-Policy, an explicit CORS
+  allow-list and a uniform error envelope that never leaks tracebacks
+  ([SECURITY.md](SECURITY.md)).
+
+## Screenshots
+
+Taken from the development database used while building AEGIS (the demo
+data plus Scenario Lab runs), so counts differ from a fresh [demo](docs/DEMO.md).
+
+| | |
+| --- | --- |
+| ![Alert explanation](docs/screenshots/alert-detail.png) Alert explanation | ![Incident](docs/screenshots/incident-detail.png) Resolved incident with timeline |
+| ![Investigation](docs/screenshots/investigation.png) Correlation with reasons | ![Detection rule](docs/screenshots/rules.png) Rule documentation and parameters |
+| ![Detection Testing](docs/screenshots/detection-testing.png) Detection evaluation | ![Scenario Lab](docs/screenshots/scenario-lab.png) Scenario Lab |
+| ![Event Explorer](docs/screenshots/events.png) Event Explorer | ![Settings](docs/screenshots/settings.png) Settings |
 
 ## Architecture
 
-```
- Browser ──► Vite dev server (:5173) ──/api proxy──► FastAPI (:8000) ──► SQLite
-             React + TypeScript                       SQLAlchemy + Alembic
+A modular monolith: one backend process, one SQLite database, one
+single-page frontend. Nothing in the intended scale (thousands of events,
+one analyst) justifies queues, caches or services.
+
+```mermaid
+flowchart LR
+    Browser["Browser<br/>React + TypeScript SPA"]
+    subgraph Backend["FastAPI backend"]
+        Routes["api/routes<br/>thin HTTP layer"]
+        Services["services<br/>queries, workflows"]
+        subgraph Pure["pure packages (no DB, no clock)"]
+            Ingestion["ingestion<br/>parse, normalize"]
+            Detection["detection<br/>rules, explanations"]
+            Investigation["investigation<br/>correlation, timeline, report"]
+            Scenarios["scenarios<br/>catalog, grading"]
+            Evaluation["evaluation<br/>suite, metrics"]
+        end
+        Models["models<br/>SQLAlchemy"]
+    end
+    DB[("SQLite<br/>Alembic migrations")]
+
+    Browser -- "JSON /api/v1" --> Routes
+    Routes --> Services
+    Routes --> Pure
+    Services --> Pure
+    Services --> Models
+    Models --> DB
 ```
 
-The backend is a modular monolith: HTTP routes stay thin and call plain Python
-services, which use SQLAlchemy models. See [ARCHITECTURE.md](ARCHITECTURE.md).
+Routes stay thin, services hold the workflow, and the analytical logic lives
+in pure packages that are tested by passing data in directly. Details and
+design decisions: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Technology stack
 
@@ -187,14 +164,15 @@ services, which use SQLAlchemy models. See [ARCHITECTURE.md](ARCHITECTURE.md).
 | Frontend | React 19, TypeScript 6, Vite 8, Tailwind CSS 4, React Router 7, Recharts 3 |
 | Testing | pytest, HTTPX (via FastAPI `TestClient`), Vitest, React Testing Library |
 | Quality | Ruff (lint + format), mypy `--strict`, ESLint, `tsc` |
-| CI | GitHub Actions (`.github/workflows/ci.yml`) |
+| Delivery | Docker / Docker Compose (unverified, see below), GitHub Actions, OpenAPI |
 
 Exact dependency versions are pinned in `backend/requirements*.txt` and
-`frontend/package.json` / `package-lock.json`.
+`frontend/package-lock.json`.
 
 ## Local development
 
-Prerequisites: **Python 3.12+** and **Node.js 22.12+** (tested with Node 26).
+Prerequisites: **Python 3.12+** and **Node.js 22.12+** (developed with
+Python 3.12 and Node 26 on Windows 11).
 
 ### Backend
 
@@ -207,7 +185,7 @@ alembic upgrade head                 # creates backend/data/aegis.db
 uvicorn app.main:create_app --factory --reload
 ```
 
-The API listens on http://127.0.0.1:8000. Interactive OpenAPI docs:
+The API listens on http://127.0.0.1:8000, with interactive OpenAPI docs at
 http://127.0.0.1:8000/docs.
 
 ### Frontend
@@ -216,113 +194,138 @@ In a second terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. The dev server forwards `/api` to the backend, so
-no CORS configuration is needed in development.
-
-### Verify it works
-
-1. Open http://localhost:5173. You land on the **Overview**. With an empty
-   database it offers the sample datasets: load **baseline office activity**.
-   The dashboard fills with 203 synthetic events and no alerts.
-2. Open **Event Explorer**. It shows `Stored events: 203 synthetic`.
-3. Search for `powershell`: four routine administrator commands appear.
-   Open one to compare the normalized fields with the original Sysmon record.
-4. **Import events → Upload a file** with
-   [docs/examples/malformed-events.jsonl](docs/examples/malformed-events.jsonl).
-   One record is stored, and the other seven are listed with the reason each
-   was rejected.
-5. Back on **Import events**, load **Detection lab (labeled)**. The result
-   reports `19 new alert(s)`, and the baseline data from step 2 adds none.
-6. Open **Alerts → 7 failed logins for user j.martin followed by a success**
-   to read the seven-part explanation, then follow a triggering event into
-   the Event Explorer.
-7. On **Detection Rules → AEGIS-AUTH-001**, change `threshold` and press
-   **Run detections now** to see the effect of tuning.
-8. Open **Investigation**, pick alert #1, and read why each correlated event
-   is linked. Tick the related password-spraying alert and press **Create
-   incident**.
-9. In the incident: move it to *investigating*, mark the successful logon
-   (`syn-lab-008`) as evidence, add a hypothesis, record the final assessment,
-   then move to *contained* and *resolved*. **Preview** shows the report.
-10. Open **Scenario Lab → Suspicious process investigation → Start
-    investigation**. Use the linked Event Explorer view and the alerts, cite
-    the events you rely on, answer the questions, and submit. The assessment
-    lists which objectives were met and explains every answer.
-11. Open **Detection Testing → Run evaluation**. Change a threshold on a
-    rule page (for example AEGIS-AUTH-001 `threshold` = 9), run it again, and
-    read the comparison: the stricter threshold misses every positive case.
-12. **System Health** shows the stored-event count. Stop the backend and press
-    **Refresh**: the page reports that the backend cannot be reached instead
-    of showing stale data.
-
-To start from an empty database again, stop the backend, delete
-`backend/data/aegis.db` and run `alembic upgrade head`.
-
-### Troubleshooting
-
-- **`[WinError 10013]` or `address already in use` when starting the backend.**
-  Another process already listens on port 8000, often an earlier backend that is
-  still running. Find it with `netstat -ano | findstr :8000` (Windows) or
-  `lsof -i :8000` (macOS/Linux) and stop it, or start AEGIS on another port
-  (`--port 8001`) and set `AEGIS_BACKEND_URL=http://127.0.0.1:8001` for the
-  frontend dev server.
-- **`Port 5173 is in use`.** The Vite server uses a fixed port so the proxy and
-  CORS settings stay valid. Stop the other process that holds the port.
-- **`npm` is not recognized.** Open a new terminal after installing Node.js so
-  the updated `PATH` is picked up.
+Open http://localhost:5173. The dev server forwards `/api` to the backend,
+so no CORS configuration is needed in development.
 
 ### Configuration
 
-All settings are environment variables prefixed with `AEGIS_`. See
-[.env.example](.env.example).
+All settings are optional environment variables prefixed with `AEGIS_`;
+see [.env.example](.env.example). The **Settings** page shows the values
+the running server uses.
+
+### Troubleshooting
+
+- **`[WinError 10013]` or `address already in use`.** Another process
+  listens on port 8000, often an earlier backend. Find it with
+  `netstat -ano | findstr :8000` (Windows) or `lsof -i :8000`
+  (macOS/Linux), or start AEGIS on another port (`--port 8001`) and set
+  `AEGIS_BACKEND_URL=http://127.0.0.1:8001` for the frontend dev server.
+- **`Port 5173 is in use`.** The Vite port is fixed so the proxy and CORS
+  settings stay valid. Stop the other process.
+- **`npm` is not recognized.** Open a new terminal after installing Node.js.
+- **Start over with an empty database:** stop the backend, delete
+  `backend/data/aegis.db`, run `alembic upgrade head`.
+
+## Docker
+
+> **Unverified.** `docker-compose.yml` and both Dockerfiles were written for
+> this release but have **not been built or run**: Docker was not available
+> on the development machine. They follow the local setup above, but treat
+> them as a starting point and please report problems.
+
+```bash
+docker compose up --build
+```
+
+Then open http://127.0.0.1:8080. The intended setup: the backend applies
+migrations on start and stores SQLite in the `aegis-data` volume; nginx
+serves the built frontend and proxies `/api` to the backend, so the browser
+talks to one origin; the port is published on `127.0.0.1` only, because
+AEGIS has no authentication.
 
 ## Tests and checks
 
 ```bash
 cd backend
-pytest                       # unit, API and migration tests
+pytest                                   # 390 tests: unit, API, migrations, security
 ruff check . && ruff format --check .
 mypy app tests
 ```
 
 ```bash
 cd frontend
-npm test                     # Vitest + React Testing Library
+npm test                                 # 64 tests: Vitest + React Testing Library
 npm run lint
 npm run typecheck
 npm run build
 ```
 
+Backend tests run against real SQLite databases built by the real
+migrations. For this release, all of the above were run from a fresh clone
+on Windows 11 (Python 3.12, Node 26) and passed. The GitHub Actions
+workflow (`.github/workflows/ci.yml`) runs the same commands but has not yet
+run on GitHub.
+
+## Demo dataset and walkthrough
+
+Two deterministic synthetic datasets ship with the backend and load with one
+click from the Overview or **Import events**:
+
+| Dataset | Events | What it contains | Expected alerts |
+| --- | ---: | --- | ---: |
+| Baseline office activity | 203 | Three ordinary office days, including routine admin activity | 0 |
+| Detection lab (labeled) | 57 | A positive case and a benign lookalike for every rule | 19 |
+
+The Scenario Lab adds its own events when a scenario is started.
+
+**[docs/DEMO.md](docs/DEMO.md)** is a 15-minute walkthrough from an empty
+database: import with malformed records, an alert explanation, rule tuning,
+correlation, a full incident from creation to report, a Scenario Lab
+investigation and a detection evaluation, with the numbers you should see at
+each step. A short version:
+
+1. Load the baseline dataset, then import
+   [docs/examples/malformed-events.jsonl](docs/examples/malformed-events.jsonl):
+   1 record stored, 7 rejected with reasons.
+2. Load the detection lab: 19 alerts. Open *7 failed logins for user
+   j.martin followed by a success* and read its explanation.
+3. **Investigation** on that alert → create an incident with the related
+   spraying alert → move it through to *resolved* → preview the report.
+4. **Detection Testing → Run evaluation**; raise a threshold and compare.
+
 ## Known limitations
 
-- **No authentication.** Anyone who can reach the API can use it. Run it on
-  localhost only.
-- Notes, status changes and history record a free-text `author` label
-  (default `analyst`), not an authenticated user.
+- **No authentication.** Anyone who can reach the API can use it. The
+  `author` on notes and history is a label, not a verified identity.
+- The rules, the synthetic datasets and the evaluation suite were written
+  together. Good results on them do not show how the rules would perform on
+  real telemetry ([details](docs/DETECTION_EVALUATION.md#what-these-numbers-do-not-show)).
+- Import accepts JSON / JSON Lines only: no native `.evtx`, syslog or CEF.
+- Detection re-evaluates all stored events on each run, and text search uses
+  SQL `LIKE`. Both are fine for tens of thousands of events, not for SIEM
+  volumes.
 - Correlation has no weighting: very common values (a domain controller, a
   shared NAT address) create many weak links. Criteria can be switched off.
-- Detection re-evaluates all stored events on each run. That is simple and
-  correct for tens of thousands of events, but would need an incremental
-  design for large volumes.
-- The rules were written together with the synthetic datasets and the
-  evaluation suite. Good results on synthetic data do not show how they
-  would perform on real telemetry; see the limitations in
-  [docs/DETECTION_EVALUATION.md](docs/DETECTION_EVALUATION.md).
-- Event import accepts JSON / JSON Lines only. There is no native `.evtx`,
-  syslog or CEF parsing.
-- Text search uses SQL `LIKE` over selected columns. It is fine for tens of
-  thousands of events but is not a full-text index.
-- Docker files are not included yet: Docker was unavailable in the development
-  environment, and they will be added and tested in Milestone 8.
-- The GitHub Actions workflow has not yet run on GitHub; it mirrors the local
-  commands listed above.
-- Running the backend tests prints a deprecation warning from Starlette
-  recommending `httpx2` over `httpx` for its test client. Tests are unaffected.
+- Scenario Lab grades conclusions and cited evidence; written reasoning is
+  stored but not graded.
+- No rate limiting; SQLite is not encrypted at rest.
+- Docker files and the CI workflow have not been run (see above).
+- Backend tests print a Starlette deprecation warning about `httpx`; it does
+  not affect results.
+
+## Roadmap
+
+Ideas, not commitments, roughly in order of value:
+
+- Authentication and per-user audit trail, so AEGIS could run beyond
+  localhost.
+- Native `.evtx` and syslog/CEF parsers.
+- Incremental detection and a full-text index for larger datasets.
+- Sigma rule import, mapped onto the same explanation model.
+- Weighted correlation that discounts very common hosts and addresses.
+- More scenarios and evaluation cases, including ones written independently
+  of the rules.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for checks, ground rules and the
+checklist for changing a detection rule. Report vulnerabilities privately as
+described in [SECURITY.md](SECURITY.md).
 
 ## License
 
-Not yet chosen. See the repository's LICENSE file once added.
+[MIT](LICENSE) © 2026 Rootvandal.
