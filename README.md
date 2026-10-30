@@ -259,7 +259,7 @@ npm run build
 Backend tests run against real SQLite databases built by the real
 migrations. For this release, all of the above were run from a fresh clone
 on Windows 11 (Python 3.12, Node 26) and passed. GitHub Actions
-(`.github/workflows/ci.yml`) runs the same commands on every push and pull
+(`.github/workflows/ci.yml`) runs the same commands on every push to `main` and every pull
 request.
 
 ## Demo dataset and walkthrough
