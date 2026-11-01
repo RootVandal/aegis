@@ -16,7 +16,7 @@ export function RuleDetailPage() {
   const current = updated?.id === ruleId ? updated : rule.data
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/rules" className="text-[12px] text-ink-muted hover:text-ink">
         ← Detection Rules
       </Link>
@@ -65,7 +65,7 @@ function RuleView({ rule, onUpdated }: { rule: RuleDetail; onUpdated: (rule: Rul
             {rule.enabled ? 'Disable' : 'Enable'}
           </button>
           {rule.alert_count > 0 && (
-            <Link to={`/alerts?rule_id=${rule.id}`} className="text-[12px] text-ok hover:underline">
+            <Link to={`/alerts?rule_id=${rule.id}`} className="text-[12px] text-accent hover:underline">
               {rule.alert_count} alert(s) →
             </Link>
           )}
@@ -78,7 +78,7 @@ function RuleView({ rule, onUpdated }: { rule: RuleDetail; onUpdated: (rule: Rul
         <div className="min-w-0 space-y-4">
           <Panel title="Detection logic">
             <List items={rule.logic} ordered />
-            <h3 className="mb-1 mt-3 text-[11px] uppercase tracking-wider text-ink-faint">Required fields</h3>
+            <h3 className="mb-1 mt-3 text-[12px] font-medium text-ink-faint">Required fields</h3>
             <ul className="flex flex-wrap gap-1.5">
               {rule.required_fields.map((field) => (
                 <li key={field} className="rounded-sm border border-line-strong px-1.5 py-0.5 font-mono text-[11px]">
@@ -97,7 +97,7 @@ function RuleView({ rule, onUpdated }: { rule: RuleDetail; onUpdated: (rule: Rul
                     href={m.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-ink hover:text-ok"
+                    className="font-mono text-ink hover:text-accent"
                   >
                     {m.id} {m.name} ↗
                   </a>

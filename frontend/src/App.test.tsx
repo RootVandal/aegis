@@ -42,7 +42,7 @@ describe('navigation', () => {
 
     const links = within(nav).getAllByRole('link').map((link) => link.getAttribute('href'))
     expect(links).toEqual([
-      '/overview', '/events', '/rules', '/alerts', '/incidents', '/investigation',
+      '/overview', '/alerts', '/incidents', '/investigation', '/events', '/rules',
       '/scenarios', '/detection-testing', '/health', '/settings',
     ])  // prettier-ignore
     expect(nav.querySelector('[aria-disabled]')).toBeNull()

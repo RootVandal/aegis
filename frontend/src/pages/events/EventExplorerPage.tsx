@@ -86,7 +86,7 @@ export function EventExplorerPage() {
   const databaseIsEmpty = events.status === 'success' && events.data.total === 0 && activeFilters.length === 0
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <div className="flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-muted">
         <p>
           Stored events:{' '}
@@ -167,7 +167,7 @@ function EventTable({ items }: { items: EventSummary[] }) {
   const navigate = useNavigate()
   return (
     <table className="w-full min-w-[900px] text-left text-[12px]">
-      <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+      <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
         <tr>
           {['Time (UTC)', 'Severity', 'Type', 'Host', 'User', 'Source IP', 'Details', 'Origin'].map((h) => (
             <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">
@@ -186,7 +186,7 @@ function EventTable({ items }: { items: EventSummary[] }) {
               className="cursor-pointer align-top hover:bg-surface-raised"
             >
               <td className="whitespace-nowrap px-3 py-1.5 pl-4 font-mono text-ink">
-                <Link to={href} onClick={(e) => e.stopPropagation()} className="hover:text-ok">
+                <Link to={href} onClick={(e) => e.stopPropagation()} className="hover:text-accent">
                   {formatUtc(item.timestamp).replace(' UTC', '')}
                 </Link>
               </td>

@@ -50,7 +50,7 @@ export function IncidentDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/incidents" className="text-[12px] text-ink-muted hover:text-ink">
         ← Incidents
       </Link>
@@ -94,7 +94,7 @@ function Header({ incident, run }: { incident: IncidentDetail; run: Run }) {
         <SeverityBadge severity={incident.severity} />
         <IncidentStatusBadge status={incident.status} />
       </div>
-      <ol className="flex flex-wrap items-center gap-1 text-[11px] uppercase tracking-wide" aria-label="Lifecycle">
+      <ol className="flex flex-wrap items-center gap-1 text-[11px] font-medium capitalize" aria-label="Lifecycle">
         {INCIDENT_STATUSES.map((status, index) => (
           <li key={status} className="flex items-center gap-1">
             <span
@@ -182,7 +182,7 @@ function Alerts({ incident, run }: { incident: IncidentDetail; run: Run }) {
           {incident.alerts.map((alert) => (
             <li key={alert.id} className="flex flex-wrap items-center gap-3 px-4 py-2 text-[12px]">
               <SeverityBadge severity={alert.severity} />
-              <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-ok">
+              <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-accent">
                 #{alert.id} {alert.title}
               </Link>
               <span className="font-mono text-ink-faint">
@@ -239,7 +239,7 @@ function Timeline({ incident, run, version }: { incident: IncidentDetail; run: R
       )}
       {timeline.status === 'success' && timeline.data.length > 0 && (
         <table className="w-full min-w-[900px] text-left text-[12px]">
-          <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+          <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
             <tr>
               {['Time (UTC)', 'Event', 'Host', 'User', 'Rules', 'Why it is on the timeline', ''].map((h) => (
                 <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">{h}</th>
@@ -253,7 +253,7 @@ function Timeline({ incident, run, version }: { incident: IncidentDetail; run: R
                 <tr key={id} className="align-top">
                   <td className="whitespace-nowrap px-3 py-1.5 pl-4 font-mono">{formatUtc(entry.event.timestamp).replace(' UTC', '')}</td>
                   <td className="whitespace-nowrap px-3 py-1.5 font-mono">
-                    <Link to={`/events/${encodeURIComponent(id)}`} className="text-ink hover:text-ok">{entry.event.event_type}</Link>
+                    <Link to={`/events/${encodeURIComponent(id)}`} className="text-ink hover:text-accent">{entry.event.event_type}</Link>
                   </td>
                   <td className="whitespace-nowrap px-3 py-1.5 font-mono">{entry.event.hostname ?? '—'}</td>
                   <td className="whitespace-nowrap px-3 py-1.5 font-mono">{entry.event.username ?? '—'}</td>
@@ -314,7 +314,7 @@ function Evidence({ incident, run }: { incident: IncidentDetail; run: Run }) {
           {incident.evidence.map((item) => (
             <li key={item.id} className="border-l-2 border-ok/50 pl-2">
               <div className="flex items-center gap-2">
-                <Link to={`/events/${encodeURIComponent(item.event.event_id)}`} className="font-mono text-ink hover:text-ok">
+                <Link to={`/events/${encodeURIComponent(item.event.event_id)}`} className="font-mono text-ink hover:text-accent">
                   {item.event.event_id}
                 </Link>
                 <span className="font-mono text-[11px] text-ink-faint">{formatUtc(item.event.timestamp)}</span>

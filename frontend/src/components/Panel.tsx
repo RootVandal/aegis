@@ -14,19 +14,19 @@ export function Panel({
   padded?: boolean
 }) {
   return (
-    <section className="rounded-md border border-line bg-surface">
-      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-ink-muted">{title}</h2>
+    <section className="rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.3)]">
+      <div className="flex min-h-12 items-center justify-between gap-3 border-b border-line/70 px-5 py-2.5">
+        <h2 className="text-[13px] font-semibold text-ink">{title}</h2>
         {actions}
       </div>
-      <div className={padded ? 'overflow-x-auto px-4 py-3' : 'overflow-x-auto'}>{children}</div>
+      <div className={padded ? 'overflow-x-auto px-5 py-4' : 'overflow-x-auto'}>{children}</div>
     </section>
   )
 }
 
 export function ErrorNotice({ error, what }: { error: ApiError; what: string }) {
   return (
-    <div role="alert" className="rounded-md border border-crit/40 bg-crit-dim px-4 py-3 text-[13px]">
+    <div role="alert" className="rounded-lg border border-crit/30 bg-crit-dim px-4 py-3 text-[13px]">
       <p className="font-medium text-crit">Could not load {what}.</p>
       <p className="mt-1 text-ink-muted">{error.message}</p>
     </div>
@@ -34,8 +34,8 @@ export function ErrorNotice({ error, what }: { error: ApiError; what: string }) 
 }
 
 export const BUTTON =
-  'rounded-sm border border-line-strong px-2.5 py-1 text-[12px] text-ink-muted hover:border-ink-faint hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-1.5 rounded-lg border border-line-strong bg-surface-raised px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-ink-faint hover:bg-line disabled:cursor-not-allowed disabled:opacity-50'
 export const BUTTON_PRIMARY =
-  'rounded-sm border border-ok/50 bg-ok-dim px-2.5 py-1 text-[12px] font-medium text-ok hover:border-ok disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-1.5 rounded-lg border border-transparent bg-accent-strong px-3 py-1.5 text-[13px] font-medium text-white shadow-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50'
 export const INPUT =
-  'w-full rounded-sm border border-line-strong bg-canvas px-2 py-1 text-[13px] text-ink placeholder:text-ink-faint focus:border-ok focus:outline-none'
+  'w-full rounded-lg border border-line-strong bg-canvas/60 px-3 py-1.5 text-[13px] text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25'

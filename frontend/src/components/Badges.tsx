@@ -1,13 +1,13 @@
 import type { DataOrigin, IngestionStatus, Severity } from '../api/events'
 
-const BASE = 'inline-flex items-center rounded-sm border px-1.5 py-px text-[11px] font-medium uppercase tracking-wide'
+const BASE = 'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize leading-4'
 
 const SEVERITY_STYLES: Record<Severity, string> = {
-  critical: 'border-crit bg-crit text-canvas',
-  high: 'border-crit/50 bg-crit-dim text-crit',
-  medium: 'border-warn/50 bg-warn-dim text-warn',
-  low: 'border-info/40 bg-info-dim text-info',
-  informational: 'border-line-strong text-ink-muted',
+  critical: 'border-crit/60 bg-crit text-white',
+  high: 'border-crit/25 bg-crit-dim text-crit',
+  medium: 'border-warn/25 bg-warn-dim text-warn',
+  low: 'border-info/25 bg-info-dim text-info',
+  informational: 'border-line-strong bg-surface-raised text-ink-muted',
 }
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
@@ -18,7 +18,7 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
 export function OriginBadge({ origin }: { origin: DataOrigin }) {
   return (
     <span
-      className={`${BASE} ${origin === 'synthetic' ? 'border-info/40 text-info' : 'border-line-strong text-ink'}`}
+      className={`${BASE} ${origin === 'synthetic' ? 'border-info/25 bg-info-dim text-info' : 'border-line-strong bg-surface-raised text-ink'}`}
       title={origin === 'synthetic' ? 'Generated training data' : 'Imported by a user'}
     >
       {origin}
@@ -27,9 +27,9 @@ export function OriginBadge({ origin }: { origin: DataOrigin }) {
 }
 
 const STATUS_STYLES: Record<IngestionStatus, string> = {
-  completed: 'border-ok/40 bg-ok-dim text-ok',
-  partial: 'border-warn/50 bg-warn-dim text-warn',
-  failed: 'border-crit/50 bg-crit-dim text-crit',
+  completed: 'border-ok/25 bg-ok-dim text-ok',
+  partial: 'border-warn/25 bg-warn-dim text-warn',
+  failed: 'border-crit/25 bg-crit-dim text-crit',
 }
 
 export function IngestionStatusBadge({ status }: { status: IngestionStatus }) {

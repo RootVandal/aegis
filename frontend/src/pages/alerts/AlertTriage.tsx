@@ -64,7 +64,7 @@ export function AlertTriage({ alert, onChange }: { alert: AlertDetail; onChange:
       <Panel title="Triage">
         <div className="space-y-3 text-[12px]">
           <p className="text-ink-muted">
-            Current status: <span className="font-medium uppercase text-ink">{label(alert.status)}</span>
+            Current status: <span className="font-medium capitalize text-ink">{label(alert.status)}</span>
           </p>
           <label className="block">
             <span className="mb-1 block text-ink-faint">Reason (required to close or reopen)</span>
@@ -89,7 +89,7 @@ export function AlertTriage({ alert, onChange }: { alert: AlertDetail; onChange:
             {alert.incident ? (
               <p>
                 Part of{' '}
-                <Link to={`/incidents/${alert.incident.id}`} className="text-ok hover:underline">
+                <Link to={`/incidents/${alert.incident.id}`} className="text-accent hover:underline">
                   incident #{alert.incident.id}: {alert.incident.title}
                 </Link>{' '}
                 <span className="text-ink-faint">({alert.incident.status})</span>

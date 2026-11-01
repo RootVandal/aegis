@@ -16,7 +16,7 @@ export function AlertDetailPage() {
   const current = updated && String(updated.id) === alertId ? updated : alert.data
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/alerts" className="text-[12px] text-ink-muted hover:text-ink">
         ← Alerts
       </Link>
@@ -39,13 +39,13 @@ function AlertView({ alert, onChange }: { alert: AlertDetail; onChange: (alert: 
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-base font-medium text-ink">{alert.title}</h2>
           <SeverityBadge severity={alert.severity} />
-          <span className="rounded-sm border border-line-strong px-1.5 py-px text-[11px] uppercase tracking-wide text-ink-muted">
+          <span className="rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-[11px] font-medium capitalize text-ink-muted">
             {alert.status.replace('_', ' ')}
           </span>
         </div>
         <p className="font-mono text-[12px] text-ink-muted">
           Alert #{alert.id} ·{' '}
-          <Link to={`/rules/${alert.rule_id}`} className="text-ink hover:text-ok">
+          <Link to={`/rules/${alert.rule_id}`} className="text-ink hover:text-accent">
             {alert.rule_id} {alert.rule_name}
           </Link>{' '}
           v{alert.rule_version} · created {formatUtc(alert.created_at)}
@@ -75,7 +75,7 @@ function AlertView({ alert, onChange }: { alert: AlertDetail; onChange: (alert: 
 
       <Section n={2} title={`Events that triggered it (${alert.events.length})`} padded={false}>
         <table className="w-full min-w-[760px] text-left text-[12px]">
-          <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+          <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
             <tr>
               {['Time (UTC)', 'Event', 'Summary', 'Origin'].map((h) => (
                 <th key={h} className="px-3 py-2 font-medium first:pl-4">
@@ -93,7 +93,7 @@ function AlertView({ alert, onChange }: { alert: AlertDetail; onChange: (alert: 
                     {formatUtc(event.timestamp).replace(' UTC', '')}
                   </td>
                   <td className="whitespace-nowrap px-3 py-1.5 font-mono">
-                    <Link to={`/events/${encodeURIComponent(event.event_id)}`} className="text-ink hover:text-ok">
+                    <Link to={`/events/${encodeURIComponent(event.event_id)}`} className="text-ink hover:text-accent">
                       {event.event_id}
                     </Link>
                   </td>
@@ -149,7 +149,7 @@ function AlertView({ alert, onChange }: { alert: AlertDetail; onChange: (alert: 
             <ul className="space-y-2 text-[12px]">
               {x.mitre.map((m) => (
                 <li key={m.id}>
-                  <a href={m.url} target="_blank" rel="noopener noreferrer" className="font-mono text-ink hover:text-ok">
+                  <a href={m.url} target="_blank" rel="noopener noreferrer" className="font-mono text-ink hover:text-accent">
                     {m.id} {m.name} ↗
                   </a>
                   <span className="ml-2 text-ink-faint">{m.tactics.join(', ')}</span>

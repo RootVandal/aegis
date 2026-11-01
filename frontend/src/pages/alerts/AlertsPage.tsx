@@ -31,7 +31,7 @@ export function AlertsPage() {
   const page = Number(filters.page ?? '1')
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <p className="text-[13px] text-ink-muted">
         Alerts are created by the detection rules from stored events. Open an alert to triage it, add notes,
         investigate related activity or turn it into an incident.
@@ -73,7 +73,7 @@ export function AlertsPage() {
               ) : (
                 <>
                   No alerts yet. Alerts appear when imported events match a rule; the{' '}
-                  <Link to="/events/import" className="text-ok hover:underline">
+                  <Link to="/events/import" className="text-accent hover:underline">
                     detection lab dataset
                   </Link>{' '}
                   produces one for every rule.
@@ -84,7 +84,7 @@ export function AlertsPage() {
           {alerts.status === 'success' && alerts.data.total > 0 && (
             <>
               <table className="w-full min-w-[920px] text-left text-[12px]">
-                <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+                <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
                   <tr>
                     {['#', 'Severity', 'Alert', 'Rule', 'Hosts', 'Users', 'Events', 'Last seen (UTC)', 'Status', 'Incident'].map(
                       (h) => (
@@ -103,7 +103,7 @@ export function AlertsPage() {
                       className="cursor-pointer align-top hover:bg-surface-raised"
                     >
                       <td className="px-3 py-1.5 pl-4 font-mono text-ink-faint">
-                        <Link to={`/alerts/${alert.id}`} onClick={(e) => e.stopPropagation()} className="hover:text-ok">
+                        <Link to={`/alerts/${alert.id}`} onClick={(e) => e.stopPropagation()} className="hover:text-accent">
                           {alert.id}
                         </Link>
                       </td>
@@ -121,7 +121,7 @@ export function AlertsPage() {
                       <td className="whitespace-nowrap px-3 py-1.5 text-ink-muted">{alert.status.replace('_', ' ')}</td>
                       <td className="px-3 py-1.5 font-mono">
                         {alert.incident_id ? (
-                          <Link to={`/incidents/${alert.incident_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-ok">
+                          <Link to={`/incidents/${alert.incident_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-accent">
                             #{alert.incident_id}
                           </Link>
                         ) : (

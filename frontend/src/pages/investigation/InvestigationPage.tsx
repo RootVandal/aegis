@@ -29,7 +29,7 @@ export function InvestigationPage() {
 function PickAlert() {
   const alerts = useApi((signal) => fetchAlerts({ status: 'new', sort: 'severity_desc' }, signal), 'pick')
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <p className="max-w-3xl text-[13px] text-ink-muted">
         Pick an alert to investigate. The workspace shows events that share a host, user, IP address or scenario with
         the alert's evidence, explains each link, and lets you open an incident from what you find.
@@ -45,7 +45,7 @@ function PickAlert() {
           {alerts.data?.items.map((alert) => (
             <li key={alert.id} className="flex items-center gap-3 px-4 py-2 text-[12px]">
               <SeverityBadge severity={alert.severity} />
-              <Link to={`/investigation?alert=${alert.id}`} className="text-ink hover:text-ok">
+              <Link to={`/investigation?alert=${alert.id}`} className="text-ink hover:text-accent">
                 #{alert.id} {alert.title}
               </Link>
               <span className="ml-auto font-mono text-ink-faint">{alert.rule_id}</span>
@@ -107,7 +107,7 @@ function Workspace({
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/investigation" className="text-[12px] text-ink-muted hover:text-ink">
         ← Pick another alert
       </Link>
@@ -116,7 +116,7 @@ function Workspace({
         <Panel title="Starting point">
           <div className="flex flex-wrap items-center gap-3 text-[13px]">
             <SeverityBadge severity={alert.data.severity} />
-            <Link to={`/alerts/${alert.data.id}`} className="text-ink hover:text-ok">
+            <Link to={`/alerts/${alert.data.id}`} className="text-ink hover:text-accent">
               Alert #{alert.data.id}: {alert.data.title}
             </Link>
             <span className="font-mono text-[12px] text-ink-faint">
@@ -130,7 +130,7 @@ function Workspace({
           {alert.data.incident ? (
             <p className="mt-2 text-[12px]">
               Already part of{' '}
-              <Link to={`/incidents/${alert.data.incident.id}`} className="text-ok hover:underline">
+              <Link to={`/incidents/${alert.data.incident.id}`} className="text-accent hover:underline">
                 incident #{alert.data.incident.id}
               </Link>
               .
@@ -202,7 +202,7 @@ function Workspace({
                       />
                     )}
                     <SeverityBadge severity={related.severity} />
-                    <Link to={`/alerts/${related.id}`} className="text-ink hover:text-ok">
+                    <Link to={`/alerts/${related.id}`} className="text-ink hover:text-accent">
                       #{related.id} {related.title}
                     </Link>
                     <span className="font-mono text-ink-faint">
@@ -225,7 +225,7 @@ function Workspace({
               </p>
             ) : (
               <table className="w-full min-w-[900px] text-left text-[12px]">
-                <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+                <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
                   <tr>
                     {['Time (UTC)', 'When', 'Event', 'Host', 'User', 'Why it is linked', 'Alerted by'].map((h) => (
                       <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">
@@ -244,7 +244,7 @@ function Workspace({
                         {offsetLabel(item.relation, item.offset_seconds)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1.5 font-mono">
-                        <Link to={`/events/${encodeURIComponent(item.event.event_id)}`} className="text-ink hover:text-ok">
+                        <Link to={`/events/${encodeURIComponent(item.event.event_id)}`} className="text-ink hover:text-accent">
                           {item.event.event_type}
                         </Link>
                       </td>

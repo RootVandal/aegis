@@ -25,10 +25,10 @@ export function AppLayout() {
           <button
             type="button"
             aria-label="Close navigation"
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="relative h-full w-56">
+          <div className="relative h-full w-60">
             <Sidebar onNavigate={() => setMenuOpen(false)} />
           </div>
         </div>

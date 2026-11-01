@@ -46,7 +46,7 @@ export function SettingsPage() {
 
   const s = settings.data
   return (
-    <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-4xl space-y-5 p-4 md:px-8 md:py-7">
       <p className="text-[13px] text-ink-muted">
         Server settings come from <code className="font-mono text-ink">AEGIS_*</code> environment variables (see{' '}
         <code className="font-mono text-ink">.env.example</code>) and are shown here read-only. Restart the backend to
