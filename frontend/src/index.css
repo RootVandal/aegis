@@ -2,35 +2,42 @@
 
 /*
  * AEGIS design tokens.
- * Near-black/graphite surfaces, one restrained green for healthy states,
- * red for critical, amber for warnings. Fonts are system stacks so the
- * app makes no requests to external font CDNs.
+ * Deep slate-blue surfaces, one indigo accent for actions and links, and
+ * status colors (green / amber / red) reserved for meaning: healthy,
+ * warning, critical. Fonts are system stacks so the app makes no requests
+ * to external font CDNs.
  */
 @theme {
-  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
 
-  --color-canvas: #0a0c0e;
-  --color-surface: #111417;
-  --color-surface-raised: #171b1f;
-  --color-line: #252a30;
-  --color-line-strong: #343a42;
+  --color-canvas: #0b0e14;
+  --color-surface: #11151d;
+  --color-surface-raised: #181d27;
+  --color-line: #222936;
+  --color-line-strong: #303849;
 
-  --color-ink: #e2e5e8;
-  --color-ink-muted: #8b939c;
-  --color-ink-faint: #5d656e;
+  --color-ink: #e7eaf0;
+  --color-ink-muted: #9aa3b4;
+  --color-ink-faint: #687186;
 
-  --color-ok: #3faa78;
-  --color-ok-dim: #1c3a2c;
-  --color-warn: #d6a033;
-  --color-warn-dim: #3d3018;
-  --color-crit: #e0484e;
-  --color-crit-dim: #431d20;
-  --color-info: #7b93ad;
-  --color-info-dim: #1f2a36;
+  --color-accent: #7c86ff;
+  --color-accent-strong: #5b63f0;
+  --color-accent-dim: #1d2142;
 
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --color-ok: #3ec28f;
+  --color-ok-dim: #13302a;
+  --color-warn: #eab04a;
+  --color-warn-dim: #392d15;
+  --color-crit: #f0616d;
+  --color-crit-dim: #3b1a21;
+  --color-info: #7fa6d9;
+  --color-info-dim: #1a2638;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
 }
 
 @layer base {
@@ -41,12 +48,32 @@
   }
 
   body {
-    @apply bg-canvas text-ink font-sans antialiased;
+    @apply text-ink font-sans antialiased;
     font-size: 14px;
+    background:
+      radial-gradient(1100px 520px at 15% -12%, rgb(124 134 255 / 0.07), transparent 70%),
+      var(--color-canvas);
   }
 
   :focus-visible {
-    outline: 1px solid var(--color-ok);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(124 134 255 / 0.35);
+  }
+
+  /* Data tables: comfortable rows and a quiet hover, everywhere. */
+  tbody tr {
+    transition: background-color 120ms;
+  }
+  tbody tr:hover {
+    background: rgb(255 255 255 / 0.02);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
   }
 }

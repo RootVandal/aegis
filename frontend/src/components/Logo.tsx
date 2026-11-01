@@ -21,13 +21,13 @@ export function LogoMark({ className = 'h-6 w-6' }: { className?: string }) {
 
 export function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <LogoMark className="h-6 w-6 text-ok" />
+    <div className="flex items-center gap-3">
+      <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-accent-strong to-[#8b5cf6] text-white shadow-[0_4px_14px_rgb(91_99_240/0.35)]">
+        <LogoMark className="h-5 w-5" />
+      </span>
       <div className="leading-none">
-        <div className="text-[15px] font-semibold tracking-[0.18em] text-ink">AEGIS</div>
-        <div className="mt-1 text-[10px] uppercase tracking-wider text-ink-faint">
-          Security Platform
-        </div>
+        <div className="text-[15px] font-semibold tracking-[0.14em] text-ink">AEGIS</div>
+        <div className="mt-1 text-[11px] text-ink-faint">Security Platform</div>
       </div>
     </div>
   )

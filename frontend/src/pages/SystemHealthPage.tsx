@@ -11,7 +11,7 @@ export function SystemHealthPage() {
   const unreachable = error !== null && isBackendUnreachable(error)
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+    <div className="mx-auto max-w-5xl space-y-6 p-4 md:px-8 md:py-7">
       <p className="text-[13px] text-ink-muted">
         Live status of the AEGIS backend and its database, read from{' '}
         <code className="font-mono text-ink">GET /api/v1/health</code>.
@@ -35,7 +35,7 @@ export function SystemHealthPage() {
 
       <Section title="Components">
         <table className="w-full text-left text-[13px]">
-          <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+          <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
             <tr>
               <th className="py-2 pr-4 font-medium">Component</th>
               <th className="py-2 pr-4 font-medium">Status</th>
@@ -139,8 +139,8 @@ function Field({ label, value }: { label: string; value: string }) {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-md border border-line bg-surface">
-      <h2 className="border-b border-line px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-ink-muted">
+    <section className="rounded-xl border border-line bg-surface">
+      <h2 className="border-b border-line/70 px-5 py-3 text-[13px] font-semibold text-ink">
         {title}
       </h2>
       <div className="overflow-x-auto px-4 py-3">{children}</div>

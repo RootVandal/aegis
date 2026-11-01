@@ -50,7 +50,7 @@ export function ScenarioPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/scenarios" className="text-[12px] text-ink-muted hover:text-ink">
         ← Scenario Lab
       </Link>
@@ -89,7 +89,7 @@ function Briefing({ scenario }: { scenario: ScenarioDetail }) {
   return (
     <Panel title={`${scenario.title} · ${scenario.difficulty}`}>
       <p className="text-[13px] leading-relaxed text-ink">{scenario.context}</p>
-      <h3 className="mb-1 mt-3 text-[11px] uppercase tracking-wider text-ink-faint">Objectives</h3>
+      <h3 className="mb-1 mt-3 text-[12px] font-medium text-ink-faint">Objectives</h3>
       <ul className="list-disc space-y-0.5 pl-5 text-[13px] text-ink-muted">
         {scenario.objectives.map((objective) => (
           <li key={objective}>{objective}</li>
@@ -100,7 +100,7 @@ function Briefing({ scenario }: { scenario: ScenarioDetail }) {
         {scenario.relevant_rules.map((rule, index) => (
           <span key={rule}>
             {index > 0 && ', '}
-            <Link to={`/rules/${rule}`} className="hover:text-ok">
+            <Link to={`/rules/${rule}`} className="hover:text-accent">
               {rule}
             </Link>
           </span>
@@ -185,14 +185,14 @@ function Workspace({
             Investigation workspace
           </Link>
         </div>
-        <h3 className="mb-1 mt-3 text-[11px] uppercase tracking-wider text-ink-faint">
+        <h3 className="mb-1 mt-3 text-[12px] font-medium text-ink-faint">
           Alerts raised on this data ({scenario.alerts.length})
         </h3>
         <ul className="space-y-1 text-[12px]">
           {scenario.alerts.map((alert) => (
             <li key={alert.id} className="flex flex-wrap items-center gap-2">
               <SeverityBadge severity={alert.severity} />
-              <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-ok">
+              <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-accent">
                 #{alert.id} {alert.title}
               </Link>
               <span className="font-mono text-ink-faint">{alert.rule_id}</span>
@@ -228,7 +228,7 @@ function Workspace({
         {events.status === 'error' && <div className="p-4"><ErrorNotice error={events.error} what="the scenario's events" /></div>}
         {events.data && (
           <table className="mt-2 w-full min-w-[760px] text-left text-[12px]">
-            <thead className="border-y border-line text-[11px] uppercase tracking-wider text-ink-faint">
+            <thead className="border-y border-line text-[12px] font-medium text-ink-faint">
               <tr>
                 {['Cite', 'Time (UTC)', 'Event', 'Host', 'User', 'Details'].map((h) => (
                   <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">{h}</th>
@@ -248,7 +248,7 @@ function Workspace({
                   </td>
                   <td className="whitespace-nowrap px-3 py-1.5 font-mono">{formatUtc(event.timestamp).replace(' UTC', '')}</td>
                   <td className="whitespace-nowrap px-3 py-1.5 font-mono">
-                    <Link to={`/events/${encodeURIComponent(event.event_id)}`} className="text-ink hover:text-ok">
+                    <Link to={`/events/${encodeURIComponent(event.event_id)}`} className="text-ink hover:text-accent">
                       {event.event_type}
                     </Link>
                   </td>
@@ -404,7 +404,7 @@ function Result({ scenario, attempt }: { scenario: ScenarioDetail; attempt: Atte
                 )
               })}
             </ul>
-            <h3 className="mb-1 mt-3 text-[11px] uppercase tracking-wider text-ink-faint">Benign lookalikes</h3>
+            <h3 className="mb-1 mt-3 text-[12px] font-medium text-ink-faint">Benign lookalikes</h3>
             <ul className="space-y-2 text-[12px]">
               {solution.decoys.map((decoy) => {
                 const hit = evaluation?.evidence.decoys_cited.some((d) => d.why === decoy.why)
@@ -424,7 +424,7 @@ function Result({ scenario, attempt }: { scenario: ScenarioDetail; attempt: Atte
                 <li key={step}>{step}</li>
               ))}
             </ol>
-            <h3 className="mb-1 mt-3 text-[11px] uppercase tracking-wider text-ink-faint">False positives to consider</h3>
+            <h3 className="mb-1 mt-3 text-[12px] font-medium text-ink-faint">False positives to consider</h3>
             <ul className="list-disc space-y-1 pl-5 text-[13px] text-ink-muted">
               {solution.false_positive_discussion.map((point) => (
                 <li key={point}>{point}</li>
@@ -432,7 +432,7 @@ function Result({ scenario, attempt }: { scenario: ScenarioDetail; attempt: Atte
             </ul>
             {attempt.rationale && (
               <>
-                <h3 className="mb-1 mt-3 text-[11px] uppercase tracking-wider text-ink-faint">Your reasoning</h3>
+                <h3 className="mb-1 mt-3 text-[12px] font-medium text-ink-faint">Your reasoning</h3>
                 <p className="whitespace-pre-wrap break-words text-[13px] text-ink-muted">{attempt.rationale}</p>
               </>
             )}
@@ -450,7 +450,7 @@ function EventLinks({ ids }: { ids: string[] }) {
       {ids.map((id, index) => (
         <span key={id}>
           {index > 0 && ', '}
-          <Link to={`/events/${encodeURIComponent(id)}`} className="hover:text-ok">
+          <Link to={`/events/${encodeURIComponent(id)}`} className="hover:text-accent">
             {id}
           </Link>
         </span>
@@ -477,7 +477,7 @@ function History({
             <button
               type="button"
               onClick={() => onSelect(attempt)}
-              className={`hover:text-ok ${attempt.id === current ? 'text-ink' : 'text-ink-muted'}`}
+              className={`hover:text-accent ${attempt.id === current ? 'text-ink' : 'text-ink-muted'}`}
             >
               #{attempt.id} · {formatUtc(attempt.started_at)} · {attempt.status.replace('_', ' ')}
               {attempt.evaluation && (attempt.evaluation.completed ? ' · completed' : ' · not completed')}

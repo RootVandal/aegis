@@ -58,7 +58,7 @@ export function DetectionTestingPage() {
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <p className="max-w-4xl text-[13px] text-ink-muted">
         Runs every detection rule against a labeled suite of small test cases and counts how often it is right. All
         numbers come from executing the rules now; nothing is precomputed.
@@ -103,7 +103,7 @@ export function DetectionTestingPage() {
       {runs.data && runs.data.length > 0 && (
         <Panel title="Run history" padded={false}>
           <table className="w-full min-w-[640px] text-left text-[12px]">
-            <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+            <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
               <tr>
                 {['#', 'When (UTC)', 'Parameters', 'Dataset', 'Precision', 'Recall', 'F1'].map((h) => (
                   <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">{h}</th>
@@ -114,7 +114,7 @@ export function DetectionTestingPage() {
               {runs.data.map((summary) => (
                 <tr key={summary.id} className={summary.id === runId ? 'bg-surface-raised' : ''}>
                   <td className="px-3 py-1.5 pl-4">
-                    <button type="button" className="hover:text-ok" onClick={() => setSelectedId(summary.id)}>
+                    <button type="button" className="hover:text-accent" onClick={() => setSelectedId(summary.id)}>
                       #{summary.id}
                     </button>
                   </td>
@@ -168,7 +168,7 @@ function RunView({ run, definitions, datasetId }: { run: RunDetail; definitions:
 
       <Panel title="Per rule" padded={false}>
         <table className="w-full min-w-[980px] text-left text-[12px]">
-          <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+          <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
             <tr>
               {['Rule', 'Version', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1', 'False positives', 'Missed'].map((h) => (
                 <th key={h} className={`whitespace-nowrap px-3 py-2 font-medium first:pl-4 ${['TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1'].includes(h) ? 'text-right' : ''}`}>
@@ -181,7 +181,7 @@ function RunView({ run, definitions, datasetId }: { run: RunDetail; definitions:
             {rules.map(([ruleId, m]) => (
               <tr key={ruleId} className="align-top">
                 <td className="whitespace-nowrap px-3 py-1.5 pl-4">
-                  <Link to={`/rules/${ruleId}`} className="text-ink hover:text-ok">{ruleId}</Link>
+                  <Link to={`/rules/${ruleId}`} className="text-ink hover:text-accent">{ruleId}</Link>
                   {run.rules[ruleId] && !run.rules[ruleId].enabled && <span className="ml-1 text-ink-faint">(disabled)</span>}
                 </td>
                 <td className="px-3 py-1.5">v{run.rules[ruleId]?.version}</td>

@@ -5,15 +5,15 @@ import { ErrorNotice, Panel } from '../../components/Panel'
 import { useApi } from '../../lib/useApi'
 
 const DIFFICULTY_STYLE = {
-  beginner: 'border-ok/40 text-ok',
-  intermediate: 'border-warn/50 text-warn',
-  advanced: 'border-crit/50 text-crit',
+  beginner: 'border-ok/25 bg-ok-dim text-ok',
+  intermediate: 'border-warn/25 bg-warn-dim text-warn',
+  advanced: 'border-crit/25 bg-crit-dim text-crit',
 } as const
 
 export function ScenarioLabPage() {
   const scenarios = useApi((signal) => fetchScenarios(signal), 'scenarios')
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <p className="max-w-3xl text-[13px] text-ink-muted">
         Guided investigations on synthetic data. Each one gives you a briefing, the normal AEGIS tools and a set of
         questions. You are graded on whether your conclusions are right <em>and</em> backed by the right evidence, not
@@ -40,7 +40,7 @@ function ScenarioCard({ scenario }: { scenario: ScenarioSummary }) {
     <Panel
       title={scenario.title}
       actions={
-        <span className={`rounded-sm border px-1.5 py-px text-[11px] uppercase tracking-wide ${DIFFICULTY_STYLE[scenario.difficulty]}`}>
+        <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${DIFFICULTY_STYLE[scenario.difficulty]}`}>
           {scenario.difficulty}
         </span>
       }
@@ -54,7 +54,7 @@ function ScenarioCard({ scenario }: { scenario: ScenarioSummary }) {
           {state.text}
           {scenario.attempt_count > 0 && ` · ${scenario.attempt_count} attempt(s)`}
         </span>
-        <Link to={`/scenarios/${scenario.id}`} className="text-ok hover:underline">
+        <Link to={`/scenarios/${scenario.id}`} className="text-accent hover:underline">
           {latest?.status === 'in_progress' ? 'Continue →' : 'Open →'}
         </Link>
       </div>

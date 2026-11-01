@@ -56,7 +56,7 @@ export function ImportPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-5xl space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/events" className="text-[12px] text-ink-muted hover:text-ink">
         ← Event Explorer
       </Link>
@@ -138,7 +138,7 @@ export function ImportPage() {
         )}
         {batches.status === 'success' && batches.data.length > 0 && (
           <table className="w-full min-w-[720px] text-left text-[12px]">
-            <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+            <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
               <tr>
                 {['#', 'Source', 'Origin', 'Status', 'Received', 'Accepted', 'Duplicate', 'Rejected', 'Finished (UTC)'].map(
                   (h) => (
@@ -184,7 +184,7 @@ function ResultPanel({ result }: { result: IngestionResult }) {
         {formatCount(batch.duplicate_count)} duplicate · {formatCount(batch.rejected_count)} rejected
       </p>
       {batch.accepted_count > 0 && (
-        <Link to="/events" className="mt-2 inline-block text-[12px] text-ok hover:underline">
+        <Link to="/events" className="mt-2 inline-block text-[12px] text-accent hover:underline">
           View events →
         </Link>
       )}
@@ -196,7 +196,7 @@ function ResultPanel({ result }: { result: IngestionResult }) {
           </span>
           {result.detection.alerts_existing > 0 && `, ${formatCount(result.detection.alerts_existing)} already known`}
           {result.detection.alerts_created > 0 && (
-            <Link to="/alerts" className="ml-2 font-sans text-ok hover:underline">
+            <Link to="/alerts" className="ml-2 font-sans text-accent hover:underline">
               View alerts →
             </Link>
           )}
@@ -204,7 +204,7 @@ function ResultPanel({ result }: { result: IngestionResult }) {
       )}
       {rejections.length > 0 && (
         <div className="mt-3">
-          <h3 className="mb-1 text-[11px] uppercase tracking-wider text-ink-faint">
+          <h3 className="mb-1 text-[12px] font-medium text-ink-faint">
             Rejected records{batch.rejected_count > rejections.length ? ` (first ${rejections.length})` : ''}
           </h3>
           <ul className="max-h-60 space-y-1 overflow-auto font-mono text-[12px]">

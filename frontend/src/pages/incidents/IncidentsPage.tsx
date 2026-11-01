@@ -17,7 +17,7 @@ export function IncidentsPage() {
   const [creating, setCreating] = useState(false)
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-3xl text-[13px] text-ink-muted">
           Incidents group related alerts and evidence into one investigation with a documented outcome. Lifecycle:
@@ -37,7 +37,7 @@ export function IncidentsPage() {
             type="button"
             aria-pressed={status === value}
             onClick={() => setParams(value ? { status: value } : {})}
-            className={`${BUTTON} ${status === value ? 'border-ok/60 text-ink' : ''}`}
+            className={`${BUTTON} ${status === value ? 'border-accent/50 bg-accent-dim text-ink' : ''}`}
           >
             {value ?? 'all'}
           </button>
@@ -53,7 +53,7 @@ export function IncidentsPage() {
         )}
         {incidents.status === 'success' && incidents.data.items.length > 0 && (
           <table className="w-full min-w-[760px] text-left text-[12px]">
-            <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+            <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
               <tr>
                 {['#', 'Severity', 'Title', 'Status', 'Alerts', 'Verdict', 'Updated (UTC)'].map((h) => (
                   <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">
@@ -70,7 +70,7 @@ export function IncidentsPage() {
                     <SeverityBadge severity={incident.severity} />
                   </td>
                   <td className="px-3 py-1.5">
-                    <Link to={`/incidents/${incident.id}`} className="text-ink hover:text-ok">
+                    <Link to={`/incidents/${incident.id}`} className="text-ink hover:text-accent">
                       {incident.title}
                     </Link>
                   </td>

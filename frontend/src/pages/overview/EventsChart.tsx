@@ -7,16 +7,16 @@ import { formatCount } from '../../lib/format'
 /*
  * Chart tokens. Series colors are categorical slots 1-2 (dark steps) from the
  * data-viz reference palette, validated against the AEGIS panel surface
- * #111417: CVD dE 26.8, normal-vision dE 31.8, both >= 3:1 contrast.
+ * #11151d: CVD dE 26.8, normal-vision dE 31.8, both >= 3:1 contrast.
  * Text never uses the series colors; identity comes from the swatches.
  */
-const SURFACE = '#111417'
+const SURFACE = '#11151d'
 const SERIES = [
   { key: 'synthetic', label: 'Synthetic', color: '#3987e5' },
   { key: 'imported', label: 'Imported', color: '#d95926' },
 ] as const
-const AXIS_TEXT = '#8b939c'
-const GRID = '#252a30'
+const AXIS_TEXT = '#9aa3b4'
+const GRID = '#222936'
 
 function bucketLabel(iso: string, bucket: 'hour' | 'day' | 'month'): string {
   const date = new Date(iso)
@@ -57,7 +57,7 @@ export function EventsChart({ points, bucket }: { points: TimePoint[]; bucket: '
       {showTable ? (
         <div className="max-h-64 overflow-auto">
           <table className="w-full text-left text-[12px]">
-            <thead className="sticky top-0 bg-surface text-[11px] uppercase tracking-wider text-ink-faint">
+            <thead className="sticky top-0 bg-surface text-[12px] font-medium text-ink-faint">
               <tr>
                 <th className="py-1 pr-4 font-medium">Period (UTC)</th>
                 <th className="py-1 pr-4 text-right font-medium">Synthetic</th>

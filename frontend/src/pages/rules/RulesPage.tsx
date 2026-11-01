@@ -29,7 +29,7 @@ export function RulesPage() {
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-5 p-4 md:px-8 md:py-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-3xl text-[13px] text-ink-muted">
           Deterministic rules evaluated over all stored events. They run automatically after each import; run them
@@ -47,7 +47,7 @@ export function RulesPage() {
         {rules.status === 'loading' && <p className="px-4 py-4 text-[13px] text-ink-muted">Loading rules…</p>}
         {rules.status === 'success' && (
           <table className="w-full min-w-[860px] text-left text-[12px]">
-            <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+            <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
               <tr>
                 {['Rule', 'Name', 'Severity', 'ATT&CK', 'Version', 'State', 'Alerts'].map((h) => (
                   <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">
@@ -60,12 +60,12 @@ export function RulesPage() {
               {rules.data.map((rule) => (
                 <tr key={rule.id} className="align-top hover:bg-surface-raised">
                   <td className="whitespace-nowrap px-3 py-2 pl-4 font-mono">
-                    <Link to={`/rules/${rule.id}`} className="text-ink hover:text-ok">
+                    <Link to={`/rules/${rule.id}`} className="text-ink hover:text-accent">
                       {rule.id}
                     </Link>
                   </td>
                   <td className="px-3 py-2">
-                    <Link to={`/rules/${rule.id}`} className="text-ink hover:text-ok">
+                    <Link to={`/rules/${rule.id}`} className="text-ink hover:text-accent">
                       {rule.name}
                     </Link>
                     <p className="mt-0.5 text-ink-faint">{rule.description}</p>
@@ -83,7 +83,7 @@ export function RulesPage() {
                   </td>
                   <td className="px-3 py-2 font-mono">
                     {rule.alert_count > 0 ? (
-                      <Link to={`/alerts?rule_id=${rule.id}`} className="text-ink hover:text-ok">
+                      <Link to={`/alerts?rule_id=${rule.id}`} className="text-ink hover:text-accent">
                         {formatCount(rule.alert_count)}
                       </Link>
                     ) : (
@@ -110,7 +110,7 @@ export function RulesPage() {
 function RunsTable({ runs }: { runs: DetectionRun[] }) {
   return (
     <table className="w-full min-w-[640px] text-left text-[12px]">
-      <thead className="border-b border-line text-[11px] uppercase tracking-wider text-ink-faint">
+      <thead className="border-b border-line text-[12px] font-medium text-ink-faint">
         <tr>
           {['#', 'Trigger', 'Finished (UTC)', 'Events', 'Findings', 'New alerts', 'Already known'].map((h) => (
             <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-4">

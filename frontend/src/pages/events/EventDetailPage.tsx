@@ -30,7 +30,7 @@ export function EventDetailPage() {
   const event = useApi((signal) => fetchEvent(eventId, signal), eventId)
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 md:px-8 md:py-7">
       <Link to="/events" className="text-[12px] text-ink-muted hover:text-ink">
         ← Event Explorer
       </Link>
@@ -62,7 +62,7 @@ function EventView({ event }: { event: EventDetail }) {
             {event.alerts.map((alert) => (
               <li key={alert.id} className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={alert.severity} />
-                <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-ok">
+                <Link to={`/alerts/${alert.id}`} className="text-ink hover:text-accent">
                   #{alert.id} {alert.title}
                 </Link>
                 <span className="font-mono text-ink-faint">
@@ -92,7 +92,7 @@ function EventView({ event }: { event: EventDetail }) {
           </dl>
           {Object.keys(event.normalized_fields).length > 0 && (
             <>
-              <h3 className="mt-4 mb-1 text-[11px] uppercase tracking-wider text-ink-faint">
+              <h3 className="mt-4 mb-1 text-[12px] font-medium text-ink-faint">
                 Additional normalized fields
               </h3>
               <JsonBlock value={event.normalized_fields} />
